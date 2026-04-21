@@ -21,9 +21,28 @@ class ResultFileHandler:
             f.write(pretty_xml_as_string)
 
     @staticmethod
-    def save_result(size, algorithm, execution_time):
+    def save_result(size, algorithm, execution_time, case="", rows=0, cols=0):
+        """
+        Guarda un resultado de ejecución de algoritmo.
+        
+        Args:
+            size: Tamaño total (rows * cols) para compatibilidad hacia atrás
+            algorithm: Nombre del algoritmo
+            execution_time: Tiempo de ejecución en nanosegundos
+            case: "Caso1" o "Caso2"
+            rows: Filas de la matriz resultado
+            cols: Columnas de la matriz resultado
+        """
         results = ResultFileHandler.load_results()
-        result_data = ResultData.ResultData(size, algorithm, ResultFileHandler.LANGUAGE, execution_time)
+        result_data = ResultData.ResultData(
+            size=size, 
+            algorithm=algorithm, 
+            language=ResultFileHandler.LANGUAGE, 
+            executionTime=execution_time,
+            case=case,
+            rows=rows,
+            cols=cols
+        )
         results.results.append(result_data)
         ResultFileHandler.save_results(results)
 

@@ -22,4 +22,4 @@ def multiply(matrizA, matrizB):
     N = len(matrizA)
     P = len(matrizB)
     M = len(matrizB[0])
-    algNaivLoopUnrollingTwo(matrizA, matrizB, N, P, M)
+    return algNaivLoopUnrollingTwo(matrizA, matrizB, N, P, M)

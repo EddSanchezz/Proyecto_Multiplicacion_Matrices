@@ -121,3 +121,4 @@ def multiply(A, B):
     M = len(B[0])
     C = [[0] * M for _ in range(N)]
     algStrassenWinograd(A, B, C, N, P, M)
+    return C

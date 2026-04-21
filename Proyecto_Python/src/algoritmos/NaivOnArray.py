@@ -10,4 +10,4 @@ def multiply(matrizA, matrizB):
     N = len(matrizA)
     P = len(matrizB)
     M = len(matrizB[0])
-    algNaivOnArray(matrizA, matrizB, N, P, M)
+    return algNaivOnArray(matrizA, matrizB, N, P, M)
