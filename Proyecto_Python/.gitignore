@@ -1,8 +1,12 @@
-# Python
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
+# C extensions
 *.so
+
+# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -29,17 +33,15 @@ env/
 # IDE
 .idea/
 .vscode/
-*.swp
-*.swo
-*~
+*.iml
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Matrices y resultados generados
-src/main/resources/matrices/
+# Results
 src/main/resources/results/
+*.xml
 
 # Logs
 *.log

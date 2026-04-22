@@ -1,282 +1,170 @@
 """
-================================================================================
-MAIN - Multiplicación de Matrices Grandes
-================================================================================
-Este script ejecuta los algoritmos de multiplicación de matrices y guarda los 
-resultados para su análisis posterior.
-
-Configuración:
-    - MIN_DIGITS: Número mínimo de dígitos para cada valor en la matriz (>6)
-    - CASO_1 / CASO_2: Tamaños de matrices para cada caso de prueba
-
-Ejemplo de uso:
-    python main.py
-================================================================================
+Main para ejecutar los algoritmos de multiplicación de matrices.
+Cada algoritmo se prueba con 2 casos de matrices cuadradas 2^n x 2^n.
 """
-
 import numpy as np
 import time
-from typing import List, Callable
 
-# Importar todos los algoritmos disponibles
 from algoritmos import (
-    NaivOnArray, 
-    NaivLoopUnrollingTwo, 
-    NaivLoopUnrollingFour, 
-    III_3_Sequential_Block, 
-    III_4_Parallel_Block, 
-    III_5_Enhanced_Parallel_Block, 
-    IV_3_Sequential_Block, 
-    IV_4_Parallel_Block, 
-    IV_5_Enhanced_Parallel_Block, 
-    V_3_Sequential_Block, 
-    V_4_Parallel_Block,
-    StrassenNaiv, 
-    WinogradOriginal, 
-    WinogradScaled, 
-    StrassenWinograd
+    NaivOnArray, NaivLoopUnrollingTwo, NaivLoopUnrollingFour,
+    WinogradOriginal, WinogradScaled, StrassenNaiv, StrassenWinograd,
+    III_3_Sequential_Block, III_4_Parallel_Block, III_5_Enhanced_Parallel_Block,
+    IV_3_Sequential_Block, IV_4_Parallel_Block, IV_5_Enhanced_Parallel_Block,
+    V_3_Sequential_Block, V_4_Parallel_Block
 )
 
 from persistence import ResultFileHandler, MatrixFileHandler, ResultsManager
 from views import ResultsViewer
 
 
-# ================================================================================
-# CONFIGURACIÓN - Modificar según sea necesario
-# ================================================================================
+# ===================== CONFIGURACIÓN =====================
+# Cantidad mínima de dígitos para cada valor de la matriz (>6)
+MIN_DIGITS = 7  # Genera valores de 1,000,000 a 9,999,999
 
-# Dígitos mínimos para cada valor en la matriz (el requerimiento dice >6)
-# MIN_DIGITS = 7 significa valores entre 1,000,000 y 9,999,999 (7 dígitos)
-MIN_DIGITS = 7
+# ===================== CASOS DE PRUEBA =====================
+# Caso 1: matrices cuadradas n*n donde n es factor de 2^n
+# Ejemplo: 512x512 = 2^9
+SIZES_CASO_1 = [512]
 
-# ================================================================================
-# CASOS DE PRUEBA
-# ================================================================================
-# Cada caso es una lista de enteros que representan el tamaño n de matrices n×n
-# donde n es una potencia de 2 (2^n): 8, 16, 32, 64, 128, 256, etc.
-#
-# La estructura es: (tamano_matriz_A, tamano_matriz_B)
-# Para multiplicar matrices cuadradas: tamano_A == tamano_B
-# Para multiplicar rectangulares: tamano_A != tamano_B (solo algunos algoritmos lo soportan)
-#
-# CASO 1: Matrices de prueba (tamaños diferentes a Caso 2)
-# Ejemplo: matriz1 (8x8) * matriz2 (8x8) = 8x8
-#         matriz1 (16x16) * matriz2 (16x16) = 16x16
-CASO_1_TAMANOS = [
-    8,    # 8x8 * 8x8
-    16,   # 16x16 * 16x16
-    32,   # 32x32 * 32x32
-    64,   # 64x64 * 64x64
-]
+# Caso 2: matrices cuadradas de diferente tamaño
+# Ejemplo: 1024x1024 = 2^10
+SIZES_CASO_2 = [1024]
 
-# CASO 2: Matrices diferentes (otros tamaños)
-# Ejemplo: matriz1 (64x64) * matriz2 (64x64) = 64x64
-#         matriz1 (128x128) * matriz2 (128x128) = 128x128
-CASO_2_TAMANOS = [
-    64,    # 64x64 * 64x64
-    128,   # 128x128 * 128x128
-    256,   # 256x256 * 256x256
-    512,   # 512x512 * 512x512
-]
 
-# ================================================================================
-# ALGORITMOS A EJECUTAR
-# ================================================================================
-# Lista de tuplas (nombre_del_algoritmo, funcion_multiply)
-# Descomenta los algoritmos que quieras ejecutar:
+# ===================== ALGORITMOS =====================
 ALGORITHMS = [
-    # Algoritmos iterativos básicos (O(n³))
-    ("NaivOnArray", NaivOnArray.multiply),
-    ("NaivLoopUnrollingTwo", NaivLoopUnrollingTwo.multiply),
-    ("NaivLoopUnrollingFour", NaivLoopUnrollingFour.multiply),
-    
-    # Algoritmos de Winograd (optimización de multiplicaciones)
-    ("WinogradOriginal", WinogradOriginal.multiply),
-    ("WinogradScaled", WinogradScaled.multiply),
-    
-    # Algoritmos de Strassen (Divide y Vencerás, O(n^2.807))
-    ("StrassenNaiv", StrassenNaiv.multiply),
-    ("StrassenWinograd", StrassenWinograd.multiply),
-    
-    # Algoritmos de Bloque - Nivel III
-    ("III_3_Sequential_Block", III_3_Sequential_Block.multiply),
-    ("III_4_Parallel_Block", III_4_Parallel_Block.multiply),
-    ("III_5_Enhanced_Parallel_Block", III_5_Enhanced_Parallel_Block.multiply),
-    
-    # Algoritmos de Bloque - Nivel IV
-    ("IV_3_Sequential_Block", IV_3_Sequential_Block.multiply),
-    ("IV_4_Parallel_Block", IV_4_Parallel_Block.multiply),
-    ("IV_5_Enhanced_Parallel_Block", IV_5_Enhanced_Parallel_Block.multiply),
-    
-    # Algoritmos de Bloque - Nivel V
-    ("V_3_Sequential_Block", V_3_Sequential_Block.multiply),
-    ("V_4_Parallel_Block", V_4_Parallel_Block.multiply),
+    NaivOnArray,
+    NaivLoopUnrollingTwo,
+    NaivLoopUnrollingFour,
+    WinogradOriginal,
+    WinogradScaled,
+    StrassenNaiv,
+    StrassenWinograd,
+    III_3_Sequential_Block,
+    III_4_Parallel_Block,
+    III_5_Enhanced_Parallel_Block,
+    IV_3_Sequential_Block,
+    IV_4_Parallel_Block,
+    IV_5_Enhanced_Parallel_Block,
+    V_3_Sequential_Block,
+    V_4_Parallel_Block,
 ]
 
-# Bandera para generar nuevas matrices o usar existentes
-# True = generar nuevas matrices, False = usar existentes
-GENERATE_MATRICES = True
 
-
-# ================================================================================
-# FUNCIONES AUXILIARES
-# ================================================================================
-
-def matrix_generator(n: int, min_digits: int) -> np.ndarray:
+def matrix_generator(n, min_digits):
     """
-    Genera una matriz cuadrada n×n con valores aleatorios.
-    
+    Genera una matriz cuadrada n x n con valores aleatorios.
+
     Args:
-        n: Tamaño de la matriz (n × n)
-        min_digits: Dígitos mínimos para cada valor
-    
+        n: Dimensión de la matriz (n x n)
+        min_digits: Cantidad mínima de dígitos para los valores
+
     Returns:
-        Matriz numpy n×n con valores aleatorios
+        np.ndarray: Matriz n x n con valores aleatorios de min_digits dígitos
     """
     max_val = 10 ** min_digits - 1
     return np.random.randint(1, max_val, size=(n, n))
 
 
-def get_matrix_name(prefix: str, n: int, case: str) -> str:
+def save_matrix(matrix, size, case):
     """
-    Genera el nombre del archivo para la matriz cuadrada.
-    
-    Args:
-        prefix: Prefijo (matrix_A o matrix_B)
-        n: Tamaño de la matriz (n × n)
-        case: Nombre del caso (Caso1 o Caso2)
-    
-    Returns:
-        Nombre del archivo, ej: "matrix_A_Caso1_8x8"
-    """
-    return f"{prefix}_{case}_{n}x{n}"
+    Guarda una matriz en un archivo XML.
 
-
-def process_algorithm(
-    n: int,
-    case: str,
-    algorithm_name: str, 
-    algorithm_executor: Callable
-) -> None:
-    """
-    Ejecuta un algoritmo de multiplicación y guarda el resultado.
-    
     Args:
-        n: Tamaño de la matriz (n × n)
-        case: Nombre del caso de prueba (Caso1 o Caso2)
-        algorithm_name: Nombre del algoritmo
-        algorithm_executor: Función que ejecuta el algoritmo
+        matrix: Matriz a guardar
+        size: Tamaño n de la matriz n x n
+        case: Identificador del caso ("Caso1" o "Caso2")
     """
-    # Cargar las matrices desde archivos XML
-    matrix_a_name = get_matrix_name("matrix_A", n, case)
-    matrix_b_name = get_matrix_name("matrix_B", n, case)
-    
-    matrix_a = MatrixFileHandler.MatrixFileHandler.load_matrix(matrix_a_name)
-    matrix_b = MatrixFileHandler.MatrixFileHandler.load_matrix(matrix_b_name)
-    
-    # Ejecutar el algoritmo y medir tiempo
-    start_time = time.perf_counter_ns()
-    algorithm_executor(matrix_a, matrix_b)
-    end_time = time.perf_counter_ns()
-    execution_time = end_time - start_time
-    
-    # Guardar resultado
-    ResultFileHandler.ResultFileHandler.save_result(
-        size=n*n,  # Para compatibilidad hacia atrás (size = total elementos)
-        algorithm=algorithm_name,
-        execution_time=execution_time,
-        case=case,
-        rows=n,
-        cols=n
+    MatrixFileHandler.MatrixFileHandler.save_matrix(
+        matrix, f"matrix_{case}_{size}x{size}"
     )
 
 
-def generate_matrices_for_case(tamanos: List[int], case_name: str) -> None:
+def load_matrix(size, case):
     """
-    Genera y guarda las matrices cuadradas para un caso de prueba.
-    
+    Carga una matriz desde un archivo XML.
+
     Args:
-        tamanos: Lista de tamaños n para matrices n×n
-        case_name: Nombre del caso (Caso1 o Caso2)
+        size: Tamaño n de la matriz n x n
+        case: Identificador del caso ("Caso1" o "Caso2")
+
+    Returns:
+        np.ndarray: Matriz cargada
     """
-    for n in tamanos:
-        # Generar matrices cuadradas n×n
-        matrix_a = matrix_generator(n, MIN_DIGITS)
-        matrix_b = matrix_generator(n, MIN_DIGITS)
-        
-        # Guardar matrices
-        name_a = get_matrix_name("matrix_A", n, case_name)
-        name_b = get_matrix_name("matrix_B", n, case_name)
-        
-        MatrixFileHandler.MatrixFileHandler.save_matrix(matrix_a, name_a)
-        MatrixFileHandler.MatrixFileHandler.save_matrix(matrix_b, name_b)
-        
-        print(f"Generadas matrices {case_name}: {name_a}, {name_b}")
+    return MatrixFileHandler.MatrixFileHandler.load_matrix(
+        f"matrix_{case}_{size}x{size}"
+    )
 
 
-def run_algorithms_for_case(tamanos: List[int], case_name: str) -> None:
+def process_algorithm(matrix_a, matrix_b, algorithm_class, size, case):
+    """
+    Ejecuta un algoritmo y guarda su tiempo de ejecución.
+
+    Args:
+        matrix_a: Matriz A
+        matrix_b: Matriz B
+        algorithm_class: Clase del algoritmo a ejecutar
+        size: Tamaño de la matriz
+        case: Caso de prueba ("Caso1" o "Caso2")
+    """
+    start_time = time.perf_counter_ns()
+    algorithm_class.multiply(matrix_a, matrix_b)
+    end_time = time.perf_counter_ns()
+    execution_time = end_time - start_time
+
+    ResultFileHandler.ResultFileHandler.save_result(
+        size=size,
+        algorithm=algorithm_class.__name__,
+        execution_time=execution_time,
+        case=case,
+        rows=size,
+        cols=size
+    )
+
+
+def run_case(sizes, case_name):
     """
     Ejecuta todos los algoritmos para un caso de prueba.
-    
+
     Args:
-        tamanos: Lista de tamaños n para matrices n×n
-        case_name: Nombre del caso (Caso1 o Caso2)
+        sizes: Lista de tamaños n para matrices n x n
+        case_name: Nombre del caso ("Caso1" o "Caso2")
     """
-    for n in tamanos:
-        print(f"\nEjecutando algoritmos para {case_name}: matriz {n}x{n}")
-        
-        for algorithm_name, algorithm_executor in ALGORITHMS:
-            try:
-                process_algorithm(
-                    n,
-                    case_name,
-                    algorithm_name, 
-                    algorithm_executor
-                )
-                print(f"  - {algorithm_name}: OK")
-            except Exception as e:
-                print(f"  - {algorithm_name}: ERROR - {e}")
+    print(f"\n{'='*50}")
+    print(f"Ejecutando {case_name}")
+    print(f"{'='*50}")
+
+    for size in sizes:
+        print(f"\n--- Tamaño: {size}x{size} ---")
+
+        matrix_a = matrix_generator(size, MIN_DIGITS)
+        matrix_b = matrix_generator(size, MIN_DIGITS)
+        save_matrix(matrix_a, size, case_name)
+        save_matrix(matrix_b, size, case_name)
+
+        matrix_a = load_matrix(size, case_name)
+        matrix_b = load_matrix(size, case_name)
+
+        for algorithm_class in ALGORITHMS:
+            print(f"  Ejecutando {algorithm_class.__name__}...", end=" ")
+            process_algorithm(matrix_a, matrix_b, algorithm_class, size, case_name)
+            print("OK")
 
 
-def display_results() -> None:
-    """
-    Muestra los resultados en un gráfico de barras.
-    """
+def display_results():
+    """Carga y muestra los resultados en un gráfico de barras."""
     results = ResultsManager.ResultsManager.get_combined_results()
+    if not results:
+        print("No hay resultados para mostrar.")
+        return
+
     app = ResultsViewer.ResultsViewer(results)
     app.mainloop()
 
 
-# ================================================================================
-# PUNTO DE ENTRADA
-# ================================================================================
-
 if __name__ == "__main__":
-    # 1. Generar matrices (solo si GENERATE_MATRICES = True)
-    if GENERATE_MATRICES:
-        print("=" * 60)
-        print("GENERANDO MATRICES PARA CASO 1")
-        print("=" * 60)
-        generate_matrices_for_case(CASO_1_TAMANOS, "Caso1")
-        
-        print("\n" + "=" * 60)
-        print("GENERANDO MATRICES PARA CASO 2")
-        print("=" * 60)
-        generate_matrices_for_case(CASO_2_TAMANOS, "Caso2")
-    
-    # 2. Ejecutar algoritmos para cada caso
-    print("\n" + "=" * 60)
-    print("EJECUTANDO ALGORITMOS PARA CASO 1")
-    print("=" * 60)
-    run_algorithms_for_case(CASO_1_TAMANOS, "Caso1")
-    
-    print("\n" + "=" * 60)
-    print("EJECUTANDO ALGORITMOS PARA CASO 2")
-    print("=" * 60)
-    run_algorithms_for_case(CASO_2_TAMANOS, "Caso2")
-    
-    # 3. Mostrar resultados (opcional)
-    print("\n" + "=" * 60)
-    print("MOSTRANDO RESULTADOS")
-    print("=" * 60)
+    # Descomentar para generar matrices y ejecutar algoritmos
+    # run_case(SIZES_CASO_1, "Caso1")
+    # run_case(SIZES_CASO_2, "Caso2")
+
     display_results()
