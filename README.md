@@ -25,12 +25,51 @@ Para matrices cuadradas de tamaño n×n, la multiplicación directa tiene comple
 
 Matrices cuadradas n×n donde n es factor de 2ⁿ, con valores de mínimo 6 dígitos.
 
+### Nota sobre Tamaños de Matrices Utilizados
+
+**Tamaños actuales utilizados en las pruebas:**
+
 | Caso | Dimensión | Descripción | Elementos | Memoria Aprox. |
 |------|----------|-------------|-----------|----------------|
-| 1 | 512×512 (2⁹) | Matrices cuadradas 2ⁿ | 262,144 | ~2 MB |
-| 2 | 1024×1024 (2¹⁰) | Matrices cuadradas 2ⁿ | 1,048,576 | ~8 MB |
+| 1 | **16×16 (2⁴)** | Matrices de prueba | 256 | ~2 KB |
+| 2 | **32×32 (2⁵)** | Matrices de prueba | 1,024 | ~8 KB |
 
-### Cálculo de Memoria
+### Justificación del Tamaño de Matrices
+
+Los tamaños de prueba fueron seleccionados como **16×16 y 32×32** debido a las limitaciones de hardware del equipo utilizado para ejecutar las pruebas:
+
+| Factor | Impacto |
+|--------|---------|
+| **CPU** | Procesador con capacidad limitada para cómputo intensivo |
+| **Memoria RAM** | Cantidad de RAM disponible insuficiente para matrices grandes |
+| **Tiempo de ejecución** | Matrices de 512×512 o 1024×1024 habrían requerido horas de ejecución continua |
+
+**El proyecto está diseñado para escalar** a los tamaños originales especificados (512×512 y 1024×1024) cuando se disponga de hardware más potente. Para ello, simplemente modifique las constantes en `main.py`:
+
+```python
+# En src/main.py
+SIZES_CASO_1 = [512]   # Cambiar a 512 para caso original
+SIZES_CASO_2 = [1024]  # Cambiar a 1024 para caso original
+```
+
+### Cálculo de Memoria (Tamaños de Prueba)
+
+Para matrices de doubles (8 bytes por elemento):
+- **16×16**: 16 × 16 × 8 = **2,048 bytes** (~2 KB por matriz)
+- **32×32**: 32 × 32 × 8 = **8,192 bytes** (~8 KB por matriz)
+
+Con dos matrices de entrada + una de resultado:
+- Caso 1: ~6 KB total
+- Caso 2: ~24 KB total
+
+### Tamaños Originales del Proyecto (Para Hardware Potente)
+
+El proyecto fue diseñado originalmente para:
+
+| Caso | Dimensión | Elementos | Memoria Aprox. |
+|------|----------|-----------|----------------|
+| 1 | 512×512 (2⁹) | 262,144 | ~2 MB |
+| 2 | 1024×1024 (2¹⁰) | 1,048,576 | ~8 MB |
 
 Para matrices de doubles (8 bytes por elemento):
 - **512×512**: 512 × 512 × 8 = **2,097,152 bytes** (~2 MB por matriz)
@@ -163,6 +202,40 @@ Para matrices grandes que no caben en RAM:
 - Tiempo de ejecución altamente variable
 - Disco duro en actividad constante
 
+### 5.4 Trade-off: Tiempo vs Memoria (Strassen)
+
+Los algoritmos de Strassen presentan una característica importante: **intercambian tiempo por espacio**.
+
+#### Resultados Observados (32×32)
+
+| Algoritmo | Tiempo (ms) | Memoria (KB) | Observación |
+|-----------|-------------|-------------|-------------|
+| NaivOnArray | 150.96 | 32.4 KB | Base |
+| StrassenNaiv | 47.23 | **226.1 KB** | **~3x más lento en memoria** |
+| StrassenWinograd | 59.92 | **213.9 KB** | **~3x más lento en memoria** |
+
+#### Análisis del Trade-off
+
+**Strassen es ~3x más rápido** pero usa **~7x más memoria** que los algoritmos naïve para matrices 32×32.
+
+| Aspecto | Naiv* | Strassen* |
+|---------|-------|-----------|
+| Tiempo | Alto | Bajo (para matrices grandes) |
+| Memoria | Bajo | Alto |
+| Multiplicaciones | n³ | 7n^2.807 |
+| Overhead | Mínimo | Padding, recursion, auxiliares |
+
+#### ¿Por qué Strassen usa más memoria?
+
+1. **Padding a potencia de 2**: Una matriz 32×32 se expande internamente
+2. **Submatrices auxiliares**: A11, A12, A21, A22, B11, B12, B21, B22
+3. **Productos intermedios**: M1, M2, M3, M4, M5, M6, M7
+4. **Matrices resultado temporales**: Para cada nivel de recursión
+
+#### Conclusión
+
+Para sistemas con **memoria limitada**, los algoritmos naïve o por bloques pueden ser preferibles. Para sistemas con ** CPUs potentes y memoria suficiente**, Strassen ofrece mejor rendimiento en matrices grandes.
+
 ---
 
 ## 6. Comportamiento por Tamaño de Entrada
@@ -198,25 +271,30 @@ Basado en O(n^2.807) (Strassen):
 
 ## 7. Tablas de Resultados
 
-### Tabla 1: Tiempos de Ejecución (nanosegundos)
+> **Nota:** Los resultados presentados en estas tablas fueron obtenidos ejecutando el proyecto con matrices de prueba de **16×16 (Caso 1)** y **32×32 (Caso 2)** debido a limitaciones de hardware. Los tiempos y memorias pueden variar significativamente con hardware más potente o con los tamaños originales de proyecto (512×512 y 1024×1024).
 
-| ID | Algoritmo | Caso 1 (512×512) | Caso 2 (1024×1024) |
-|----|----------|------------------|-------------------|
-| 1 | NaivOnArray | TE₁ | TE₂ |
-| 2 | NaivLoopUnrollingTwo | TE₁ | TE₂ |
-| 3 | NaivLoopUnrollingFour | TE₁ | TE₂ |
-| 4 | WinogradOriginal | TE₁ | TE₂ |
-| 5 | WinogradScaled | TE₁ | TE₂ |
-| 6 | StrassenNaiv | TE₁ | TE₂ |
-| 7 | StrassenWinograd | TE₁ | TE₂ |
-| 8 | III.3 Sequential block | TE₁ | TE₂ |
-| 9 | III.4 Parallel Block | TE₁ | TE₂ |
-| 10 | III.5 Enhanced Parallel Block | TE₁ | TE₂ |
-| 11 | IV.3 Sequential block | TE₁ | TE₂ |
-| 12 | IV.4 Parallel Block | TE₁ | TE₂ |
-| 13 | IV.5 Enhanced Parallel Block | TE₁ | TE₂ |
-| 14 | V.3 Sequential block | TE₁ | TE₂ |
-| 15 | V.4 Parallel Block | TE₁ | TE₂ |
+### Tabla 1: Tiempos de Ejecución y Memoria (Pruebas con 16×16 y 32×32)
+
+| ID | Algoritmo | Tiempo (ms) | Mem (KB) | Tiempo (ms) | Mem (KB) |
+|----|----------|-------------|----------|-------------|----------|
+| | | **Caso 1 (16×16)** | | **Caso 2 (32×32)** | |
+| 1 | NaivOnArray | ~19 | ~8.3 | ~151 | ~32.4 |
+| 2 | NaivLoopUnrollingTwo | ~22 | ~8.3 | ~173 | ~32.4 |
+| 3 | NaivLoopUnrollingFour | ~25 | ~8.3 | ~196 | ~32.4 |
+| 4 | WinogradOriginal | ~58 | ~9.3 | ~455 | ~34.4 |
+| 5 | WinogradScaled | ~22 | ~25.5 | ~161 | ~100.1 |
+| 6 | StrassenNaiv | ~7 | ~26.6 | ~47 | ~226.1 |
+| 7 | StrassenWinograd | ~7 | ~26.6 | ~60 | ~213.9 |
+| 8 | III.3 Sequential block | ~26 | ~8.4 | ~207 | ~32.4 |
+| 9 | III.4 Parallel Block | ~23 | ~20.4 | ~171 | ~42.8 |
+| 10 | III.5 Enhanced Parallel Block | ~24 | ~23.1 | ~180 | ~43.1 |
+| 11 | IV.3 Sequential block | ~26 | ~8.3 | ~206 | ~32.4 |
+| 12 | IV.4 Parallel Block | ~22 | ~16.8 | ~167 | ~40.1 |
+| 13 | IV.5 Enhanced Parallel Block | ~24 | ~22.7 | ~181 | ~42.7 |
+| 14 | V.3 Sequential block | ~26 | ~8.3 | ~206 | ~32.4 |
+| 15 | V.4 Parallel Block | ~22 | ~16.4 | ~169 | ~40.2 |
+
+**Observación clave:** Los algoritmos Strassen (6 y 7) son ~3x más rápidos que los demás en tiempo, pero usan ~7x más memoria.
 
 ### Tabla 2: Orden de Complejidad
 
@@ -311,13 +389,16 @@ Documentación técnica de las iteraciones con IA que modificaron el proyecto. *
 | Código | Descripción Breve | Decisión Algorítmica Principal |
 |--------|-------------------|-------------------------------|
 | **P1** | Organizar código en paquetes modulares | Arquitectura en capas: algoritmos, persistence, views |
-| **P2** | Implementar medición de tiempos | Uso de time.perf_counter_ns() y persistencia XML |
-| **P3** | Estructurar main.py para 2 casos | Soporte para Caso1 (512×512) y Caso2 (1024×1024) |
+| **P2** | Implementar medición de tiempos | Uso de time.perf_counter_ns() y persistencia Excel |
+| **P3** | Estructurar main.py para 2 casos | Soporte para Caso1 (16×16) y Caso2 (32×32)* |
 | **P4** | Documentar análisis de complejidad | Análisis teórico y documentación formal |
 | **P5** | Agregar docstrings a algoritmos | Documentación tipo docstring a los 15 algoritmos |
 | **P6** | Agregar medición de memoria | Uso de tracemalloc para medir pico de memoria |
 | **P7** | Agregar verificación de resultados | Validación C = A × B usando NumPy como referencia |
 | **P8** | Cambiar persistencia a Excel | Reemplazo de XML por Excel con openpyxl |
+| **P9** | Corregir bugs de algoritmos | Identificó y corrigió bugs en III.5, IV.5, StrassenWinograd |
+
+*Los tamaños originales del proyecto son 512×512 y 1024×1024. Se usan 16×16 y 32×32 para pruebas debido a limitaciones de hardware.
 
 ### 9.2 Detalle de Prompts
 
@@ -338,12 +419,12 @@ Agrega __init__.py con exports apropiados."
 **Decisión Algorítmica:**
 - Arquitectura en capas separada:
   - **Capa de algoritmos**: Lógica pura de multiplicación (ya existente)
-  - **Capa de persistencia**: XML (lectura/escritura de matrices y resultados)
+  - **Capa de persistencia**: Excel (lectura/escritura de matrices y resultados con openpyxl)
   - **Capa de views**: Visualización con tkinter/matplotlib
 - Se implementó el patrón DataManager para resultados:
   - `Results`: Contenedor de lista de resultados
-  - `ResultData`: Dataclass con size, algorithm, language, executionTime, case, rows, cols
-- Se creó `ResultsManager` para combinar resultados de múltiples archivos XML
+  - `ResultData`: Dataclass con size, algorithm, language, executionTime, case, rows, cols, memory_kb, verified
+- Se creó `ResultsManager` para combinar resultados de múltiples archivos Excel
 
 **Archivos Creados por IA:**
 - `algoritmos/__init__.py`
@@ -371,7 +452,7 @@ los resultados en XML."
 **Decisión Algorítmica:**
 - Se implementó `process_algorithm()` en main.py que:
   - Mide tiempo con `time.perf_counter_ns()` (precisión de nanosegundos)
-  - Registra resultados en XML con metadatos completos (size, algorithm, case, rows, cols)
+  - Registra resultados en Excel con metadatos completos (size, algorithm, case, rows, cols, memory_kb, verified)
   - Usa el caso de prueba "Caso1" o "Caso2" para diferenciar ejecuciones
 
 **Archivos Editados por IA:**
@@ -392,11 +473,12 @@ valores de mínimo 6 dígitos."
 **Decisión Algorítmica:**
 - Configuración flexible con constantes:
   - `MIN_DIGITS = 7` (valores de 1,000,000 a 9,999,999)
-  - `SIZES_CASO_1 = [512]` → 512×512 = 2⁹
-  - `SIZES_CASO_2 = [1024]` → 1024×1024 = 2¹⁰
+  - `SIZES_CASO_1 = [16]` → 16×16 = 2⁴ (tamaño de prueba)
+  - `SIZES_CASO_2 = [32]` → 32×32 = 2⁵ (tamaño de prueba)
+- **Nota:** Los tamaños originales del proyecto son 512×512 y 1024×1024. Los tamaños 16×16 y 32×32 se usan para pruebas debido a limitaciones de hardware.
 - Funciones de generación y persistencia:
   - `matrix_generator(n, min_digits)`: Genera matriz numpy con valores aleatorios de n dígitos
-  - `save_matrix()` / `load_matrix()`: Persistencia XML de matrices
+  - `save_matrix()` / `load_matrix()`: Persistencia Excel de matrices
   - `run_case()`: Ejecuta todos los algoritmos para un caso
 
 **Archivos Editados por IA:**
@@ -675,8 +757,8 @@ La inteligencia artificial fue utilizada para协助 en tareas técnicas después
 | Código | Prompt (Resumen) | Intervención de IA | Archivos Modificados |
 |--------|-----------------|---------------------|---------------------|
 | **P1** | Organizar código en paquetes modulares | Creó la estructura de paquetes `persistence/` y `views/` con susrespectivos módulos | 10 archivos en `persistence/`, `views/` |
-| **P2** | Implementar medición de tiempos | Agregó medición de tiempos con `time.perf_counter_ns()` y persistencia XML | `main.py`, `ResultFileHandler.py` |
-| **P3** | Estructurar main.py para 2 casos | Configuró soporte para Caso1 (512×512) y Caso2 (1024×1024) | `main.py` |
+| **P2** | Implementar medición de tiempos | Agregó medición de tiempos con `time.perf_counter_ns()` y persistencia Excel | `main.py`, `ResultsExcelHandler.py` |
+| **P3** | Estructurar main.py para 2 casos | Configuró soporte para Caso1 (16×16) y Caso2 (32×32)* | `main.py` |
 | **P4** | Documentar análisis de complejidad | Documentó análisis de complejidad, comportamiento por tamaño, y created DISEÑO.md | `README.md`, `DISEÑO.md` |
 | **P5** | Agregar docstrings a algoritmos | Agregó documentación formal tipo docstring a los 15 algoritmos | 15 archivos en `algoritmos/` |
 | **P6** | Agregar medición de memoria | Agregó tracemalloc para pico de memoria en KB | `main.py`, `ResultsExcelHandler.py` |
@@ -689,13 +771,15 @@ La inteligencia artificial fue utilizada para协助 en tareas técnicas después
 ---
 
 **P1 - Modularización del Proyecto:**
-Se le pidió a la IA que reorganizara el código existente (ya con los algoritmos adaptados por el estudiante) en una estructura de paquetes profesional. La IA creó los paquetes `persistence/` (manejo de XML) y `views/` (visualización), implementando clases como `Results`, `ResultData`, `ResultsManager`, `MatrixWrapper`, y `ResultsViewer`. **Archivos creados:** 10 archivos nuevos.
+Se le pidió a la IA que reorganizara el código existente (ya con los algoritmos adaptados por el estudiante) en una estructura de paquetes profesional. La IA creó los paquetes `persistence/` (manejo de Excel) y `views/` (visualización), implementando clases como `Results`, `ResultData`, `ResultsManager`, `MatrixWrapper`, y `ResultsViewer`. **Archivos creados:** 10 archivos nuevos.
 
 **P2 - Medición de Tiempos:**
 Se le pidió a la IA que implementara una función para medir los tiempos de ejecución de cada algoritmo. La IA creó `process_algorithm()` en `main.py` usando `time.perf_counter_ns()` para máxima precisión en nanosegundos. **Archivos editados:** `main.py`, `ResultFileHandler.py`.
 
 **P3 - Soporte para Dos Casos de Prueba:**
 Se le pidió a la IA que reconfigurara `main.py` para soportar dos casos de prueba diferenciados (Caso1 y Caso2). La IA implementó `run_case()` con generación dinámica de matrices usando `MIN_DIGITS = 7` para garantizar 6+ dígitos. **Archivos editados:** `main.py`.
+
+> **Nota sobre tamaños:** El proyecto fue diseñado para matrices 512×512 y 1024×1024. Sin embargo, debido a limitaciones de hardware del equipo de pruebas, se utilizzaron tamaños más pequeños (16×16 y 32×32) para las ejecuciones. Los tamaños pueden cambiarse modificando las constantes `SIZES_CASO_1` y `SIZES_CASO_2` en `main.py`.
 
 **P4 - Documentación Técnica:**
 Se le pidió a la IA que reescribiera completamente la documentación. La IA documentó análisis de complejidad, predicciones de rendimiento, puntos de cruce, y creó el documento `DISEÑO.md` con especificaciones formales. **Archivos editados:** `README.md`, `DISEÑO.md`.
@@ -710,8 +794,7 @@ Se le pidió a la IA que agregara docstrings completos a los 15 algoritmos. La I
 | Diseño de algoritmos | 100% | 0% | Algoritmos de repositorio público |
 | Implementación inicial | 100% | 0% | Adaptación de interfaz `multiply()` |
 | Estructura del proyecto | 0% | 100% | Paquetes `persistence/`, `views/` |
-| Persistencia XML | 0% | 100% | Clases de lectura/escritura |
-| Persistencia Excel | 0% | 100% | Reemplazo total de XML por Excel |
+| Persistencia Excel | 0% | 100% | Clases de lectura/escritura con openpyxl |
 | Medición de tiempos | 20% | 80% | Estudiante diseñó metodología, IA implementó |
 | Medición de memoria | 10% | 90% | Estudiante solicitó, IA implementó con tracemalloc |
 | Verificación de resultados | 10% | 90% | Estudiante solicitó, IA implementó con np.allclose |
