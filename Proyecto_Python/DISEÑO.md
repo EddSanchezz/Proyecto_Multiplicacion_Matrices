@@ -20,7 +20,7 @@ Implementar y analizar algoritmos para la multiplicación de matrices grandes co
 ### 1.2 Alcance
 
 - 15 algoritmos implementados
-- 2 casos de prueba (512x512 y 1024x1024)
+- 2 casos de prueba (128x128 y 256x256)
 - Análisis de complejidad O(n³) vs O(n^2.807)
 - Persistencia de datos y resultados
 
@@ -134,7 +134,7 @@ matriz = [[float64, float64, ...],  # Fila 0
 ```python
 @dataclass
 class ResultData:
-    size: int          # Tamaño n (512, 1024)
+    size: int          # Tamaño n (128, 256)
     algorithm: str     # Nombre del algoritmo
     language: str     # "python"
     executionTime: int # Nanosegundos
@@ -301,18 +301,18 @@ Cada caso de prueba genera un archivo Excel con la siguiente estructura:
 
 Ejemplo de estructura:
 ```
-matrix_Caso1_512x512.xlsx
-├── Matriz A (512×512)
+matrix_Caso1_128x128.xlsx
+├── Matriz A (128×128)
 │   ├── Fila 0: [valor, valor, ...]
 │   ├── Fila 1: [valor, valor, ...]
 │   └── ...
-├── Matriz B (512×512)
+├── Matriz B (128×128)
 │   └── ...
 └── Info
     ├── Caso: Caso1
-    ├── Tamaño: 512×512
+    ├── Tamaño: 128×128
     ├── Fecha: 2026-01-01
-    └── Elementos por matriz: 262144
+    └── Elementos por matriz: 16384
 ```
 
 #### Archivo de Resultados
@@ -321,8 +321,8 @@ El archivo `python_results.xlsx` contiene:
 
 | Hoja | Contenido |
 |------|----------|
-| Caso1 | Tiempos de ejecución para 512×512 |
-| Caso2 | Tiempos de ejecución para 1024×1024 |
+| Caso1 | Tiempos de ejecución para 128×128 |
+| Caso2 | Tiempos de ejecución para 256×256 |
 | Comparativa | Tabla resumen comparativa |
 | Gráfico | Imagen PNG del gráfico comparativo |
 
@@ -343,10 +343,8 @@ El gráfico muestra:
 ```
 src/main/resources/
 ├── matrices/
-│   ├── matrix_Caso1_512x512.xlsx
-│   ├── matrix_Caso1_512x512.xlsx
-│   ├── matrix_Caso2_1024x1024.xlsx
-│   └── matrix_Caso2_1024x1024.xlsx
+│   ├── matrix_Caso1_128x128.xlsx
+│   └── matrix_Caso2_256x256.xlsx
 └── results/
     ├── python_results.xlsx
     └── grafico_comparativo.png
@@ -360,15 +358,15 @@ src/main/resources/
 
 | Tamaño | Elementos | Bytes (float64) | Bytes (float32) |
 |--------|----------|---------------|----------------|
-| 512×512 | 262,144 | 2,097,152 | 1,048,576 |
-| 1024×1024 | 1,048,576 | 8,388,608 | 4,194,304 |
+| 128×128 | 16,384 | 131,072 | 65,536 |
+| 256×256 | 65,536 | 524,288 | 262,144 |
 
 ### 7.2 Requisitos de Memoria
 
 | Caso | Matrices | Resultado | Total |
 |------|----------|---------|--------|
-| 512×512 | 2×2MB | 2MB | 6MB |
-| 1024×1024 | 2×8MB | 8MB | 24MB |
+| 128×128 | 2×128KB | 128KB | 384KB |
+| 256×256 | 2×512KB | 512KB | 1.5MB |
 
 ### 7.3 Consideraciones de Caché
 
@@ -387,8 +385,8 @@ src/main/resources/
 
 | ID | Matriz A | Matriz B | Propósito |
 |----|----------|---------|-----------|
-| CP-01 | 512×512 | 512×512 | Caso 1 |
-| CP-02 | 1024×1024 | 1024×1024 | Caso 2 |
+| CP-01 | 128×128 | 128×128 | Caso 1 |
+| CP-02 | 256×256 | 256×256 | Caso 2 |
 
 ### 8.2 Métricas a Medir
 
@@ -440,7 +438,7 @@ src/main/resources/
 Ejecutando Caso1
 ==================================================
 
---- Tamaño: 512×512 ---
+--- Tamaño: 128×128 ---
   Ejecutando NaivOnArray... OK
   Ejecutando NaivLoopUnrollingTwo... OK
   Ejecutando NaivLoopUnrollingFour... OK

@@ -5,8 +5,8 @@ Manejo de lectura y escritura de resultados de tiempos de ejecución en archivos
 Excel (.xlsx), incluyendo generación de gráficos comparativos.
 
 Formato del archivo Excel:
-    - Hoja "Caso1": Tiempos de ejecución para caso 512×512
-    - Hoja "Caso2": Tiempos de ejecución para caso 1024×1024
+    - Hoja "Caso1": Tiempos de ejecución para el primer caso configurado
+    - Hoja "Caso2": Tiempos de ejecución para el segundo caso configurado
     - Hoja "Comparativa": Tabla resumen comparativa
     - Hoja "Gráfico": Gráfico comparativo embebido (imagen PNG)
 
@@ -68,6 +68,27 @@ class ResultsExcelHandler:
         "V_3_Sequential_Block",
         "V_4_Parallel_Block"
     ]
+
+    @staticmethod
+    def _format_case_label(case_name, results):
+        """
+        Construye una etiqueta legible para un caso usando el tamano ejecutado.
+
+        Args:
+            case_name (str): Nombre del caso ("Caso1" o "Caso2")
+            results (list): Resultados de ejecucion disponibles
+
+        Returns:
+            str: Etiqueta en formato "Caso 1 (128×128)"
+        """
+        base_label = case_name.replace("Caso", "Caso ")
+
+        for result in results:
+            if result.get("case") == case_name and result.get("size"):
+                size = result["size"]
+                return f"{base_label} ({size}×{size})"
+
+        return base_label
 
     @staticmethod
     def save_result(size, algorithm, execution_time, case="", rows=0, cols=0, memory_kb=0, verified=False):
@@ -193,7 +214,9 @@ class ResultsExcelHandler:
 
         title_fill = PatternFill(start_color="D9E2F3", end_color="D9E2F3", fill_type="solid")
 
-        ws.cell(row=1, column=1, value=f"Resultados - {case_name}")
+        case_label = ResultsExcelHandler._format_case_label(case_name, results)
+
+        ws.cell(row=1, column=1, value=f"Resultados - {case_label}")
         ws.cell(row=1, column=1).font = Font(bold=True, size=14)
         ws.cell(row=1, column=1).fill = title_fill
         ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=7)
@@ -314,6 +337,8 @@ class ResultsExcelHandler:
         case2_results = {r["algorithm"]: r for r in results if r.get("case") == "Caso2"}
 
         algorithms = ResultsExcelHandler.ALGORITHM_NAMES
+        case1_label = ResultsExcelHandler._format_case_label("Caso1", results)
+        case2_label = ResultsExcelHandler._format_case_label("Caso2", results)
         case1_times = [case1_results.get(alg, {}).get("executionTime", 0) / 1_000_000 for alg in algorithms]
         case2_times = [case2_results.get(alg, {}).get("executionTime", 0) / 1_000_000 for alg in algorithms]
         case1_mem = [case1_results.get(alg, {}).get("memory_kb", 0) / 1024 for alg in algorithms]
@@ -324,8 +349,8 @@ class ResultsExcelHandler:
         x = np.arange(len(algorithms))
         width = 0.35
 
-        bars1 = ax1.bar(x - width/2, case1_times, width, label='Caso 1 (256×256)', color='#4472C4', edgecolor='black')
-        bars2 = ax1.bar(x + width/2, case2_times, width, label='Caso 2 (512×512)', color='#ED7D31', edgecolor='black')
+        bars1 = ax1.bar(x - width/2, case1_times, width, label=case1_label, color='#4472C4', edgecolor='black')
+        bars2 = ax1.bar(x + width/2, case2_times, width, label=case2_label, color='#ED7D31', edgecolor='black')
 
         ax1.set_xlabel('Algoritmo', fontsize=12, fontweight='bold')
         ax1.set_ylabel('Tiempo de Ejecución (s)', fontsize=12, fontweight='bold')
@@ -348,8 +373,8 @@ class ResultsExcelHandler:
         add_labels_time(bars1)
         add_labels_time(bars2)
 
-        bars3 = ax2.bar(x - width/2, case1_mem, width, label='Caso 1 (256×256)', color='#70AD47', edgecolor='black')
-        bars4 = ax2.bar(x + width/2, case2_mem, width, label='Caso 2 (512×512)', color='#FF0000', edgecolor='black')
+        bars3 = ax2.bar(x - width/2, case1_mem, width, label=case1_label, color='#70AD47', edgecolor='black')
+        bars4 = ax2.bar(x + width/2, case2_mem, width, label=case2_label, color='#FF0000', edgecolor='black')
 
         ax2.set_xlabel('Algoritmo', fontsize=12, fontweight='bold')
         ax2.set_ylabel('Memoria Pico (MB)', fontsize=12, fontweight='bold')

@@ -23,61 +23,41 @@ Para matrices cuadradas de tamaño n×n, la multiplicación directa tiene comple
 
 ## 2. Casos de Prueba
 
-Matrices cuadradas n×n donde n es factor de 2ⁿ, con valores de mínimo 6 dígitos.
+Matrices cuadradas n×n donde n es potencia de 2, con valores aleatorios de mínimo 6 dígitos.
 
-### Nota sobre Tamaños de Matrices Utilizados
-
-**Tamaños actuales utilizados en las pruebas:**
+### Tamaños configurados en esta rama
 
 | Caso | Dimensión | Descripción | Elementos | Memoria Aprox. |
 |------|----------|-------------|-----------|----------------|
-| 1 | **16×16 (2⁴)** | Matrices de prueba | 256 | ~2 KB |
-| 2 | **32×32 (2⁵)** | Matrices de prueba | 1,024 | ~8 KB |
+| 1 | **128×128 (2⁷)** | Caso base de comparación | 16,384 | ~128 KB |
+| 2 | **256×256 (2⁸)** | Caso ampliado de comparación | 65,536 | ~512 KB |
 
-### Justificación del Tamaño de Matrices
+### Justificación
 
-Los tamaños de prueba fueron seleccionados como **16×16 y 32×32** debido a las limitaciones de hardware del equipo utilizado para ejecutar las pruebas:
+La rama `Prueba-2` quedó ajustada para ejecutar pruebas intermedias que siguen siendo suficientemente exigentes, pero todavía viables en el hardware disponible.
 
 | Factor | Impacto |
 |--------|---------|
-| **CPU** | Procesador con capacidad limitada para cómputo intensivo |
-| **Memoria RAM** | Cantidad de RAM disponible insuficiente para matrices grandes |
-| **Tiempo de ejecución** | Matrices de 512×512 o 1024×1024 habrían requerido horas de ejecución continua |
+| **CPU** | Los algoritmos O(n³) en Python puro ya superan el minuto por algoritmo en 256×256 |
+| **Memoria RAM** | Los algoritmos de Strassen elevan el consumo temporal de memoria al crear submatrices auxiliares |
+| **Tiempo de ejecución** | La corrida completa de los 15 algoritmos sobre ambos casos toma varios minutos |
 
-**El proyecto está diseñado para escalar** a los tamaños originales especificados (512×512 y 1024×1024) cuando se disponga de hardware más potente. Para ello, simplemente modifique las constantes en `main.py`:
+### Configuración actual en `main.py`
 
 ```python
-# En src/main.py
-SIZES_CASO_1 = [512]   # Cambiar a 512 para caso original
-SIZES_CASO_2 = [1024]  # Cambiar a 1024 para caso original
+SIZES_CASO_1 = [128]
+SIZES_CASO_2 = [256]
 ```
 
-### Cálculo de Memoria (Tamaños de Prueba)
+### Cálculo de memoria
 
-Para matrices de doubles (8 bytes por elemento):
-- **16×16**: 16 × 16 × 8 = **2,048 bytes** (~2 KB por matriz)
-- **32×32**: 32 × 32 × 8 = **8,192 bytes** (~8 KB por matriz)
+Para matrices `float64` (8 bytes por elemento):
+- **128×128**: 128 × 128 × 8 = **131,072 bytes** (~128 KB por matriz)
+- **256×256**: 256 × 256 × 8 = **524,288 bytes** (~512 KB por matriz)
 
-Con dos matrices de entrada + una de resultado:
-- Caso 1: ~6 KB total
-- Caso 2: ~24 KB total
-
-### Tamaños Originales del Proyecto (Para Hardware Potente)
-
-El proyecto fue diseñado originalmente para:
-
-| Caso | Dimensión | Elementos | Memoria Aprox. |
-|------|----------|-----------|----------------|
-| 1 | 512×512 (2⁹) | 262,144 | ~2 MB |
-| 2 | 1024×1024 (2¹⁰) | 1,048,576 | ~8 MB |
-
-Para matrices de doubles (8 bytes por elemento):
-- **512×512**: 512 × 512 × 8 = **2,097,152 bytes** (~2 MB por matriz)
-- **1024×1024**: 1024 × 1024 × 8 = **8,388,608 bytes** (~8 MB por matriz)
-
-Con dos matrices de entrada + una de resultado:
-- Caso 1: ~6 MB total
-- Caso 2: ~24 MB total
+Con dos matrices de entrada y una de resultado:
+- Caso 1: ~384 KB totales
+- Caso 2: ~1.5 MB totales
 
 ---
 
@@ -206,17 +186,17 @@ Para matrices grandes que no caben en RAM:
 
 Los algoritmos de Strassen presentan una característica importante: **intercambian tiempo por espacio**.
 
-#### Resultados Observados (32×32)
+#### Resultados observados (256×256)
 
 | Algoritmo | Tiempo (ms) | Memoria (KB) | Observación |
 |-----------|-------------|-------------|-------------|
-| NaivOnArray | 150.96 | 32.4 KB | Base |
-| StrassenNaiv | 47.23 | **226.1 KB** | **~3x más lento en memoria** |
-| StrassenWinograd | 59.92 | **213.9 KB** | **~3x más lento en memoria** |
+| NaivOnArray | 78982.85 | 2090.0 KB | Base |
+| StrassenNaiv | 22750.54 | **13209.6 KB** | **~3.5x más rápido, pero con mucho más uso de memoria** |
+| StrassenWinograd | 23502.41 | **12492.8 KB** | **~3.4x más rápido, con alto overhead de memoria** |
 
 #### Análisis del Trade-off
 
-**Strassen es ~3x más rápido** pero usa **~7x más memoria** que los algoritmos naïve para matrices 32×32.
+**Strassen es ~3.5x más rápido** pero usa **~6x más memoria** que los algoritmos naïve en 256×256.
 
 | Aspecto | Naiv* | Strassen* |
 |---------|-------|-----------|
@@ -227,7 +207,7 @@ Los algoritmos de Strassen presentan una característica importante: **intercamb
 
 #### ¿Por qué Strassen usa más memoria?
 
-1. **Padding a potencia de 2**: Una matriz 32×32 se expande internamente
+1. **Padding a potencia de 2**: El algoritmo garantiza dimensiones convenientes para la recursión
 2. **Submatrices auxiliares**: A11, A12, A21, A22, B11, B12, B21, B22
 3. **Productos intermedios**: M1, M2, M3, M4, M5, M6, M7
 4. **Matrices resultado temporales**: Para cada nivel de recursión
@@ -271,70 +251,34 @@ Basado en O(n^2.807) (Strassen):
 
 ## 7. Tablas de Resultados
 
-> **Nota:** Los resultados presentados en estas tablas fueron obtenidos ejecutando el proyecto con matrices de prueba de **16×16 (Caso 1)** y **32×32 (Caso 2)** debido a limitaciones de hardware. Los tiempos y memorias pueden variar significativamente con hardware más potente o con los tamaños originales de proyecto (512×512 y 1024×1024).
+> **Nota:** Los siguientes resultados corresponden a la ejecución real de esta rama con matrices **128×128 (Caso 1)** y **256×256 (Caso 2)**.
 
-### Tabla 1: Tiempos de Ejecución y Memoria (Pruebas con 16×16 y 32×32)
+### Tabla 1: Tiempos de Ejecución y Memoria
 
-| ID | Algoritmo | Tiempo (ms) | Mem (KB) | Tiempo (ms) | Mem (KB) |
-|----|----------|-------------|----------|-------------|----------|
-| | | **Caso 1 (16×16)** | | **Caso 2 (32×32)** | |
-| 1 | NaivOnArray | ~19 | ~8.3 | ~151 | ~32.4 |
-| 2 | NaivLoopUnrollingTwo | ~22 | ~8.3 | ~173 | ~32.4 |
-| 3 | NaivLoopUnrollingFour | ~25 | ~8.3 | ~196 | ~32.4 |
-| 4 | WinogradOriginal | ~58 | ~9.3 | ~455 | ~34.4 |
-| 5 | WinogradScaled | ~22 | ~25.5 | ~161 | ~100.1 |
-| 6 | StrassenNaiv | ~7 | ~26.6 | ~47 | ~226.1 |
-| 7 | StrassenWinograd | ~7 | ~26.6 | ~60 | ~213.9 |
-| 8 | III.3 Sequential block | ~26 | ~8.4 | ~207 | ~32.4 |
-| 9 | III.4 Parallel Block | ~23 | ~20.4 | ~171 | ~42.8 |
-| 10 | III.5 Enhanced Parallel Block | ~24 | ~23.1 | ~180 | ~43.1 |
-| 11 | IV.3 Sequential block | ~26 | ~8.3 | ~206 | ~32.4 |
-| 12 | IV.4 Parallel Block | ~22 | ~16.8 | ~167 | ~40.1 |
-| 13 | IV.5 Enhanced Parallel Block | ~24 | ~22.7 | ~181 | ~42.7 |
-| 14 | V.3 Sequential block | ~26 | ~8.3 | ~206 | ~32.4 |
-| 15 | V.4 Parallel Block | ~22 | ~16.4 | ~169 | ~40.2 |
+| ID | Algoritmo | Caso 1 Tiempo (ms) | Caso 1 Memoria | Caso 2 Tiempo (ms) | Caso 2 Memoria |
+|----|----------|--------------------|----------------|--------------------|----------------|
+| 1 | NaivOnArray | 9669.754 | 517.9 KB | 78982.851 | 2.04 MB |
+| 2 | NaivLoopUnrollingTwo | 9502.785 | 517.9 KB | 75822.770 | 2.04 MB |
+| 3 | NaivLoopUnrollingFour | 9541.205 | 517.9 KB | 77576.543 | 2.04 MB |
+| 4 | WinogradOriginal | 11233.782 | 526.0 KB | 85616.510 | 2.05 MB |
+| 5 | WinogradScaled | 4022.539 | 1.53 MB | 31030.600 | 6.11 MB |
+| 6 | StrassenNaiv | 3214.351 | 3.32 MB | 22750.538 | 12.90 MB |
+| 7 | StrassenWinograd | 3301.112 | 3.12 MB | 23502.408 | 12.20 MB |
+| 8 | III.3 Sequential block | 10110.369 | 516.6 KB | 81788.459 | 2.04 MB |
+| 9 | III.4 Parallel Block | 10258.631 | 543.7 KB | 80397.801 | 2.04 MB |
+| 10 | III.5 Enhanced Parallel Block | 10067.390 | 529.0 KB | 81636.835 | 2.04 MB |
+| 11 | IV.3 Sequential block | 10031.176 | 517.2 KB | 80388.906 | 2.04 MB |
+| 12 | IV.4 Parallel Block | 10000.218 | 524.0 KB | 82182.180 | 2.04 MB |
+| 13 | IV.5 Enhanced Parallel Block | 10238.998 | 529.0 KB | 81385.720 | 2.04 MB |
+| 14 | V.3 Sequential block | 9935.476 | 517.2 KB | 83677.251 | 2.04 MB |
+| 15 | V.4 Parallel Block | 9886.084 | 523.8 KB | 79055.443 | 2.04 MB |
 
-**Observación clave:** Los algoritmos Strassen (6 y 7) son ~3x más rápidos que los demás en tiempo, pero usan ~7x más memoria.
+### Hallazgos principales
 
-### Tabla 2: Orden de Complejidad
-
-| ID | Algoritmo | Orden de Complejidad |
-|----|----------|---------------------|
-| 1 | NaivOnArray | O(n³) |
-| 2 | NaivLoopUnrollingTwo | O(n³) |
-| 3 | NaivLoopUnrollingFour | O(n³) |
-| 4 | WinogradOriginal | O(n³) |
-| 5 | WinogradScaled | O(n³) |
-| 6 | StrassenNaiv | O(n^log₂7) |
-| 7 | StrassenWinograd | O(n^log₂7) |
-| 8 | III.3 Sequential block | O(n³) |
-| 9 | III.4 Parallel Block | O(n³/p) |
-| 10 | III.5 Enhanced Parallel Block | O(n³/p) |
-| 11 | IV.3 Sequential block | O(n³) |
-| 12 | IV.4 Parallel Block | O(n³/p) |
-| 13 | IV.5 Enhanced Parallel Block | O(n³/p) |
-| 14 | V.3 Sequential block | O(n³) |
-| 15 | V.4 Parallel Block | O(n³/p) |
-
-### Tabla 3: Comparativa de Rendimiento (speedup vs NaivOnArray)
-
-| ID | Algoritmo | Speedup Caso 1 | Speedup Caso 2 |
-|----|----------|----------------|---------------|
-| 1 | NaivOnArray | 1.00× (base) | 1.00× (base) |
-| 2 | NaivLoopUnrollingTwo | - | - |
-| 3 | NaivLoopUnrollingFour | - | - |
-| 4 | WinogradOriginal | - | - |
-| 5 | WinogradScaled | - | - |
-| 6 | StrassenNaiv | - | - |
-| 7 | StrassenWinograd | - | - |
-| 8 | III.3 Sequential block | - | - |
-| 9 | III.4 Parallel Block | - | - |
-| 10 | III.5 Enhanced Parallel Block | - | - |
-| 11 | IV.3 Sequential block | - | - |
-| 12 | IV.4 Parallel Block | - | - |
-| 13 | IV.5 Enhanced Parallel Block | - | - |
-| 14 | V.3 Sequential block | - | - |
-| 15 | V.4 Parallel Block | - | - |
+- `StrassenNaiv` fue el algoritmo más rápido en ambos casos.
+- `StrassenWinograd` quedó muy cerca en tiempo, pero mantuvo un consumo alto de memoria.
+- Los algoritmos naïve y por bloques se agruparon cerca de los 9.5-11.2 s para 128×128 y 75-86 s para 256×256.
+- `WinogradScaled` fue el mejor compromiso entre tiempo y complejidad de implementación fuera de la familia Strassen.
 
 ---
 
@@ -390,7 +334,7 @@ Documentación técnica de las iteraciones con IA que modificaron el proyecto. *
 |--------|-------------------|-------------------------------|
 | **P1** | Organizar código en paquetes modulares | Arquitectura en capas: algoritmos, persistence, views |
 | **P2** | Implementar medición de tiempos | Uso de time.perf_counter_ns() y persistencia Excel |
-| **P3** | Estructurar main.py para 2 casos | Soporte para Caso1 (16×16) y Caso2 (32×32)* |
+| **P3** | Estructurar main.py para 2 casos | Soporte para Caso1 (128×128) y Caso2 (256×256) |
 | **P4** | Documentar análisis de complejidad | Análisis teórico y documentación formal |
 | **P5** | Agregar docstrings a algoritmos | Documentación tipo docstring a los 15 algoritmos |
 | **P6** | Agregar medición de memoria | Uso de tracemalloc para medir pico de memoria |
@@ -398,7 +342,7 @@ Documentación técnica de las iteraciones con IA que modificaron el proyecto. *
 | **P8** | Cambiar persistencia a Excel | Reemplazo de XML por Excel con openpyxl |
 | **P9** | Corregir bugs de algoritmos | Identificó y corrigió bugs en III.5, IV.5, StrassenWinograd |
 
-*Los tamaños originales del proyecto son 512×512 y 1024×1024. Se usan 16×16 y 32×32 para pruebas debido a limitaciones de hardware.
+*En esta rama, los tamaños de trabajo quedaron fijados en 128×128 y 256×256 para permitir ejecuciones completas con tiempos manejables.
 
 ### 9.2 Detalle de Prompts
 
@@ -473,9 +417,9 @@ valores de mínimo 6 dígitos."
 **Decisión Algorítmica:**
 - Configuración flexible con constantes:
   - `MIN_DIGITS = 7` (valores de 1,000,000 a 9,999,999)
-  - `SIZES_CASO_1 = [16]` → 16×16 = 2⁴ (tamaño de prueba)
-  - `SIZES_CASO_2 = [32]` → 32×32 = 2⁵ (tamaño de prueba)
-- **Nota:** Los tamaños originales del proyecto son 512×512 y 1024×1024. Los tamaños 16×16 y 32×32 se usan para pruebas debido a limitaciones de hardware.
+  - `SIZES_CASO_1 = [128]` → 128×128 = 2⁷
+  - `SIZES_CASO_2 = [256]` → 256×256 = 2⁸
+- **Nota:** La rama `Prueba-2` quedó calibrada para esos dos tamaños y toda la documentación fue actualizada en consecuencia.
 - Funciones de generación y persistencia:
   - `matrix_generator(n, min_digits)`: Genera matriz numpy con valores aleatorios de n dígitos
   - `save_matrix()` / `load_matrix()`: Persistencia Excel de matrices
@@ -636,8 +580,8 @@ requirements.txt incluye:
 
 1. **Configurar tamaños** en `src/main.py`:
 ```python
-SIZES_CASO_1 = [512]  # Caso 1: 512×512
-SIZES_CASO_2 = [1024]  # Caso 2: 1024×1024
+SIZES_CASO_1 = [128]  # Caso 1: 128×128
+SIZES_CASO_2 = [256]  # Caso 2: 256×256
 ```
 
 2. **Ejecutar**:
@@ -658,54 +602,27 @@ Los resultados se guardan en formato Excel:
 Archivos generados:
 | Archivo | Descripción |
 |---------|-------------|
-| `matrix_Caso1_512x512.xlsx` | Matrices del caso 1 (Hojas: Matriz A, Matriz B, Info) |
-| `matrix_Caso2_1024x1024.xlsx` | Matrices del caso 2 (Hojas: Matriz A, Matriz B, Info) |
+| `matrix_Caso1_128x128.xlsx` | Matrices del caso 1 (Hojas: Matriz A, Matriz B, Info) |
+| `matrix_Caso2_256x256.xlsx` | Matrices del caso 2 (Hojas: Matriz A, Matriz B, Info) |
 | `python_results.xlsx` | Tiempos de ejecución (Hojas: Caso1, Caso2, Comparativa, Gráfico) |
 | `grafico_comparativo.png` | Imagen del gráfico comparativo |
 
 El archivo `python_results.xlsx` contiene:
-- **Hoja "Caso1"**: Tiempos para matrices 512×512
-- **Hoja "Caso2"**: Tiempos para matrices 1024×1024
+- **Hoja "Caso1"**: Tiempos para matrices 128×128
+- **Hoja "Caso2"**: Tiempos para matrices 256×256
 - **Hoja "Comparativa"**: Tabla resumen comparando ambos casos
 - **Hoja "Gráfico"**: Imagen del gráfico de barras comparativo
 
 ---
 
-## 11. Análisis de Rendimiento Predicho
+## 11. Resultados Observados
 
-Basado en la complejidad algorítmica, esperamos:
+La ejecución real de esta rama mostró el siguiente comportamiento general:
 
-### Caso 1 (512×512) - Tiempo Relativo Estimado
-
-| Algoritmo | Factor vs Naiv |
-|-----------|----------------|
-| NaivOnArray | 1.00× (base) |
-| NaivLoopUnrollingTwo | ~0.95× |
-| NaivLoopUnrollingFour | ~0.90× |
-| WinogradOriginal | ~0.80× |
-| WinogradScaled | ~0.85× |
-| StrassenNaiv | ~1.20×* |
-| StrassenWinograd | ~1.10×* |
-| III.3 Sequential block | ~1.00× |
-| III.4 Parallel Block | ~0.25×** |
-| III.5 Enhanced Parallel Block | ~0.20×** |
-| IV.3 Sequential block | ~0.95× |
-| IV.4 Parallel Block | ~0.20×** |
-| IV.5 Enhanced Parallel Block | ~0.15×** |
-| V.3 Sequential block | ~0.90× |
-| V.4 Parallel Block | ~0.15×** |
-
-*Strassen tiene overhead para matrices pequeñas
-**Paralelo depende del número de núcleos disponibles
-
-### Caso 2 (1024×1024) - Tiempo Relativo Estimado
-
-| Algoritmo | Factor vs Naiv |
-|-----------|----------------|
-| NaivOnArray | 1.00× (base) |
-| StrassenNaiv | ~0.70× |
-| StrassenWinograd | ~0.60× |
-| IV.4 Parallel Block | ~0.10×** |
+1. En **128×128**, `StrassenNaiv` y `StrassenWinograd` fueron claramente los más rápidos, con tiempos de ~3.2 s y ~3.3 s respectivamente.
+2. En **256×256**, ambos algoritmos de Strassen mantuvieron la ventaja, con ~22.8 s y ~23.5 s, muy por debajo del rango de 75-86 s del resto de implementaciones O(n³).
+3. `WinogradScaled` quedó como la mejor alternativa no recursiva, aunque con mayor consumo de memoria que los métodos naïve y por bloques.
+4. Todas las ejecuciones terminaron con verificación correcta (`[OK]`) frente a `NumPy.matmul`.
 
 ---
 
@@ -713,9 +630,9 @@ Basado en la complejidad algorítmica, esperamos:
 
 1. **Para matrices pequeñas (<64×64)**: Los algoritmos iterativos simples (Naiv*, Winograd*) son más eficientes debido al bajo overhead.
 
-2. **Para matrices grandes (>512×512)**: Los algoritmos de Strassen y los paralelos muestran mejor rendimiento.
+2. **Para matrices medianas y grandes (desde 128×128)**: Los algoritmos de Strassen mostraron la mejor relación tiempo/resultado en este entorno.
 
-3. **Uso de memoria**: Las matrices 1024×1024 requieren ~24 MB de RAM, manageable en equipos modernos.
+3. **Uso de memoria**: Los mejores tiempos vinieron acompañados de un costo mayor en memoria, especialmente en `StrassenNaiv` y `StrassenWinograd`.
 
 4. **Paralelización**: Los algoritmos paralelos ofrecen speedup lineal con el número de núcleos, hasta un límite práctico de ~8-16 hilos.
 
@@ -747,7 +664,7 @@ El estudiante realizó de manera independiente las siguientes tareas:
 |---|----------|-------------|-----------|
 | A1 | Descarga de algoritmos | Se descargaron los algoritmos de multiplicación de matrices de un repositorio GitHub público | Código fuente con implementaciones originales |
 | A2 | Adaptación de interfaz | Se adaptaron los algoritmos para cumplir con los requisitos del proyecto: interfaz unificada `multiply(A, B)` y soporte para matrices Python estándar | 15 archivos en `algoritmos/` |
-| A3 | Selección de casos de prueba | Se definieron los tamaños 512×512 y 1024×1024 como casos de prueba | Constantes `SIZES_CASO_1`, `SIZES_CASO_2` en main.py |
+| A3 | Selección de casos de prueba | Se definieron los tamaños 128×128 y 256×256 como casos de prueba de esta rama | Constantes `SIZES_CASO_1`, `SIZES_CASO_2` en main.py |
 | A4 | Diseño de pruebas | Se diseñaron los casos de prueba y metodología de verificación | main.py: `run_case()`, `process_algorithm()` |
 
 ### 15.2 Interacciones con IA Durante el Desarrollo
@@ -758,7 +675,7 @@ La inteligencia artificial fue utilizada para协助 en tareas técnicas después
 |--------|-----------------|---------------------|---------------------|
 | **P1** | Organizar código en paquetes modulares | Creó la estructura de paquetes `persistence/` y `views/` con susrespectivos módulos | 10 archivos en `persistence/`, `views/` |
 | **P2** | Implementar medición de tiempos | Agregó medición de tiempos con `time.perf_counter_ns()` y persistencia Excel | `main.py`, `ResultsExcelHandler.py` |
-| **P3** | Estructurar main.py para 2 casos | Configuró soporte para Caso1 (16×16) y Caso2 (32×32)* | `main.py` |
+| **P3** | Estructurar main.py para 2 casos | Configuró soporte para Caso1 (128×128) y Caso2 (256×256) | `main.py` |
 | **P4** | Documentar análisis de complejidad | Documentó análisis de complejidad, comportamiento por tamaño, y created DISEÑO.md | `README.md`, `DISEÑO.md` |
 | **P5** | Agregar docstrings a algoritmos | Agregó documentación formal tipo docstring a los 15 algoritmos | 15 archivos en `algoritmos/` |
 | **P6** | Agregar medición de memoria | Agregó tracemalloc para pico de memoria en KB | `main.py`, `ResultsExcelHandler.py` |
@@ -779,7 +696,7 @@ Se le pidió a la IA que implementara una función para medir los tiempos de eje
 **P3 - Soporte para Dos Casos de Prueba:**
 Se le pidió a la IA que reconfigurara `main.py` para soportar dos casos de prueba diferenciados (Caso1 y Caso2). La IA implementó `run_case()` con generación dinámica de matrices usando `MIN_DIGITS = 7` para garantizar 6+ dígitos. **Archivos editados:** `main.py`.
 
-> **Nota sobre tamaños:** El proyecto fue diseñado para matrices 512×512 y 1024×1024. Sin embargo, debido a limitaciones de hardware del equipo de pruebas, se utilizzaron tamaños más pequeños (16×16 y 32×32) para las ejecuciones. Los tamaños pueden cambiarse modificando las constantes `SIZES_CASO_1` y `SIZES_CASO_2` en `main.py`.
+> **Nota sobre tamaños:** En la rama `Prueba-2` los casos quedaron fijados en 128×128 y 256×256, y la ejecución completa validó los 15 algoritmos con esos tamaños.
 
 **P4 - Documentación Técnica:**
 Se le pidió a la IA que reescribiera completamente la documentación. La IA documentó análisis de complejidad, predicciones de rendimiento, puntos de cruce, y creó el documento `DISEÑO.md` con especificaciones formales. **Archivos editados:** `README.md`, `DISEÑO.md`.
@@ -809,8 +726,8 @@ Durante el desarrollo, se identificaron y corrigieron los siguientes bugs en los
 | Bug | Algoritmo | Descripción | Fix Aplicado |
 |-----|-----------|-------------|--------------|
 | Indexación incorrecta | IV.5 Enhanced Parallel | `C[i][k]` en lugar de `C[i][j]` | Corregido a `C[i][j]` |
-| Padding no potencia de 2 | StrassenNaiv | newSize=17 para input 16×16 | newSize=16 (potencia de 2) |
-| Padding no potencia de 2 | StrassenWinograd | newSize=17 para input 16×16 | newSize=16 (potencia de 2) |
+| Padding no potencia de 2 | StrassenNaiv | Cálculo de padding incorrecto para tamaños potencia de 2 | Ajuste al tamaño potencia de 2 correcto |
+| Padding no potencia de 2 | StrassenWinograd | Cálculo de padding incorrecto para tamaños potencia de 2 | Ajuste al tamaño potencia de 2 correcto |
 | Parámetros incorrectos en ThreadPoolExecutor | III.5 Enhanced Parallel | Segunda llamada `submit(N,N,P,M)` en lugar de `submit(N,P,M)` | Corregido |
 | Parámetros incorrectos en ThreadPoolExecutor | IV.5 Enhanced Parallel | Segunda llamada `submit(N,N,P,M)` en lugar de `submit(N,P,M)` | Corregido |
 | Tipo de dato entero (overflow) | StrassenWinograd | Matriz resultado inicializada como `[[0]]` (int) | Cambiado a `[[0.0]]` (float) |
@@ -834,13 +751,13 @@ executor.submit(block_multiply_section, matrizA, matrizB, matrizRes, mid_point, 
 
 **Problema 1:** La matriz resultado se inicializaba como enteros (`[[0] * M]`), causando overflow en matrices grandes.
 
-**Problema 2:** El algoritmo implementaba fórmulas de Winograd de forma incorrecta, causando resultados erróneos para tamaños de 32×32 y mayores.
+**Problema 2:** El algoritmo implementaba fórmulas de Winograd de forma incorrecta, causando resultados erróneos al aumentar el tamaño de entrada.
 
 **Solución:** Reescritura completa del algoritmo usando la fórmula estándar de Strassen-Winograd con variables temporales separadas para cada producto M1-M7.
 
 ### 15.7 Aclaración importante
 
-Los 15 algoritmos de multiplicación de matrices (Naiv, Winograd, Strassen, Block) son implementaciones conocidas de la literatura académica y fueron obtenidos de un repositorio GitHub público por el estudiante. La IA协助 únicamente en tareas técnicas de organización, medición, documentación y corrección de bugs, **no en la invención o diseño de los algoritmos**.
+Los 15 algoritmos de multiplicación de matrices (Naiv, Winograd, Strassen, Block) son implementaciones conocidas de la literatura académica y fueron obtenidos de un repositorio GitHub público por el estudiante. La IA ayudó únicamente en tareas técnicas de organización, medición, documentación y corrección de bugs, **no en la invención o diseño de los algoritmos**.
 
 ---
 

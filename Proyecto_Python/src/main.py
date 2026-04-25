@@ -36,8 +36,8 @@ from persistence.MatrixFileHandler import MatrixFileHandler
 
 MIN_DIGITS = 7
 
-SIZES_CASO_1 = [16]
-SIZES_CASO_2 = [32]
+SIZES_CASO_1 = [128]
+SIZES_CASO_2 = [256]
 
 
 ALGORITHMS = [
