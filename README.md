@@ -33,21 +33,21 @@ Para 512×512: ~2 MB por matriz. Para 1024×1024: ~8 MB por matriz.
 
 | # | Algoritmo | Descripción | Complejidad |
 |---|----------|-------------|-------------|
-| 1 | NaivOnArray | Triple bucle ingenuo | O(n³) |
-| 2 | NaivLoopUnrollingTwo | Desenrollado ×2 | O(n³) |
-| 3 | NaivLoopUnrollingFour | Desenrollado ×4 | O(n³) |
-| 4 | WinogradOriginal | Optimización Winograd | O(n³) |
-| 5 | WinogradScaled | Winograd con escalado | O(n³) |
-| 6 | StrassenNaiv | Divide y vencerás | O(n^2.807) |
-| 7 | StrassenWinograd | Strassen optimizado | O(n^2.807) |
-| 8 | III.3 Sequential block | Bloques secuenciales | O(n³) |
-| 9 | III.4 Parallel Block | Bloques paralelos | O(n³/p) |
-| 10 | III.5 Enhanced Parallel | Bloques optimizados | O(n³/p) |
-| 11 | IV.3 Sequential block | Bloques optimizados | O(n³) |
-| 12 | IV.4 Parallel Block | Bloques paralelos | O(n³/p) |
-| 13 | IV.5 Enhanced Parallel | Bloques optimizados | O(n³/p) |
-| 14 | V.3 Sequential block | Bloques avanzados | O(n³) |
-| 15 | V.4 Parallel Block | Bloques paralelos | O(n³/p) |
+| 1 | NaivOnArray | Triple bucle `for` ingenuo sobre arrays numpy. Itera filas de A y columnas de B, acumulando productos escalares | O(n³) |
+| 2 | NaivLoopUnrollingTwo | Optimización del algoritmo naive que procesa 2 elementos por iteración reduciendo overhead de control de flujo | O(n³) |
+| 3 | NaivLoopUnrollingFour | Desenrollado de bucle ×4 para mayor throughput. Procesa 4 elementos simultáneamente minimizando iteraciones | O(n³) |
+| 4 | WinogradOriginal | Algoritmo de Winograd original con fórmulas de reducción de multiplicaciones. Divide matrices y usa precomputación de términos | O(n³) |
+| 5 | WinogradScaled | Variante de Winograd con escalado de datos para evitar overflow y mejorar estabilidad numérica en matrices grandes | O(n³) |
+| 6 | StrassenNaiv | Algoritmo divide y vencerás de Strassen. Divide matrices en 4 submatrices y calcula 7 productos en lugar de 8 | O(n^2.807) |
+| 7 | StrassenWinograd | Combinación de Strassen con fórmulas optimizadas de Winograd. Minimiza productos matriciales a 7 multiplicaciones | O(n^2.807) |
+| 8 | III.3 Sequential block | Multiplicación por bloques secuencial. Divide matrices en bloques que caben en caché L2 para optimizar acceso a memoria | O(n³) |
+| 9 | III.4 Parallel Block | Versión paralela de III.3 usando `ThreadPoolExecutor`. Distribuye bloques entre múltiples hilos de ejecución | O(n³/p) |
+| 10 | III.5 Enhanced Parallel | Optimización de III.4 con mejor granularidad de bloques y balanceo de carga dinámico entre threads | O(n³/p) |
+| 11 | IV.3 Sequential block | Bloques secuenciales con tamaño de bloque optimizado para caché. Versión mejorada de III.3 con patron de acceso optimizado | O(n³) |
+| 12 | IV.4 Parallel Block | Paralelización de IV.3 con pool de hilos. Usa estrategias de particionamiento para minimizar espera entre threads | O(n³/p) |
+| 13 | IV.5 Enhanced Parallel | Algoritmo paralelo más optimizado de la familia IV. Incluye precomputación de índices y distribución inteligente de trabajo | O(n³/p) |
+| 14 | V.3 Sequential block | Bloques secuenciales avanzado con técnicas de blocking multicapa. Optimiza uso de caché L1, L2 y L3 simultáneamente | O(n³) |
+| 15 | V.4 Parallel Block | Versión paralela de V.3 que combina blocking multicapa con paralelización. maximiza throughput en arquitecturas multicore | O(n³/p) |
 
 p = núcleos/threads disponibles
 
@@ -143,60 +143,345 @@ Strassen es ~3x más rápido pero usa ~7x más memoria:
 Proyecto_Multiplicacion_Matrices/
 ├── Proyecto_Python/
 │   ├── src/
-│   │   ├── main.py                      # Punto de entrada
-│   │   ├── algoritmos/                  # 15 algoritmos
-│   │   ├── persistence/                  # Persistencia Excel
-│   │   │   ├── MatrixFileHandler.py      # Matrices → Excel
-│   │   │   └── ResultsExcelHandler.py    # Resultados → Excel + Gráficos
-│   │   └── views/                        # Visualización
+│   │   ├── main.py                          # Punto de entrada
+│   │   ├── main/
+│   │   │   └── resources/
+│   │   │       ├── matrices/                # Matrices guardadas en Excel
+│   │   │       │   ├── matrix_Caso1_16.xlsx
+│   │   │       │   └── matrix_Caso2_32.xlsx
+│   │   │       └── results/                 # Resultados y gráficos
+│   │   │           ├── python_results.xlsx  # Tiempos y memoria
+│   │   │           └── grafico_comparativo.png
+│   │   ├── algoritmos/                      # 15 algoritmos
+│   │   │   ├── __init__.py
+│   │   │   ├── NaivOnArray.py
+│   │   │   ├── NaivLoopUnrollingTwo.py
+│   │   │   ├── NaivLoopUnrollingFour.py
+│   │   │   ├── WinogradOriginal.py
+│   │   │   ├── WinogradScaled.py
+│   │   │   ├── StrassenNaiv.py
+│   │   │   ├── StrassenWinograd.py
+│   │   │   ├── III_3_Sequential_Block.py
+│   │   │   ├── III_4_Parallel_Block.py
+│   │   │   ├── III_5_Enhanced_Parallel_Block.py
+│   │   │   ├── IV_3_Sequential_Block.py
+│   │   │   ├── IV_4_Parallel_Block.py
+│   │   │   ├── IV_5_Enhanced_Parallel_Block.py
+│   │   │   ├── V_3_Sequential_Block.py
+│   │   │   └── V_4_Parallel_Block.py
+│   │   ├── persistence/                     # Persistencia Excel
+│   │   │   ├── __init__.py
+│   │   │   ├── MatrixFileHandler.py         # Matrices → Excel
+│   │   │   ├── ResultData.py
+│   │   │   ├── ResultFileHandler.py
+│   │   │   ├── Results.py
+│   │   │   ├── ResultsManager.py
+│   │   │   ├── MatrixWrapper.py
+│   │   │   └── ResultsViewer.py
+│   │   └── views/
 │   └── requirements.txt
 ├── README.md
 └── DISEÑO.md
 ```
 
+### Archivos Generados
+
+| Archivo | Descripción | Ubicación |
+|---------|-------------|-----------|
+| `matrix_Caso1_16.xlsx` | Matrices 16×16 del Caso 1 | `src/main/resources/matrices/` |
+| `matrix_Caso2_32.xlsx` | Matrices 32×32 del Caso 2 | `src/main/resources/matrices/` |
+| `python_results.xlsx` | Resultados completos (30 filas) | `src/main/resources/results/` |
+| `grafico_comparativo.png` | Gráfico comparativo | `src/main/resources/results/` |
+
 ---
 
 ## 9. Prompts Utilizados (IA)
 
-Los prompts fueron realizados **después** de que el estudiante tenía los algoritmos implementados.
+Los prompts fueron realizados **después** de que el estudiante tenía los 15 algoritmos implementados y funcionales. Los bugs mencionados en P9 fueron identificados y corregidos mediante asistencia de IA.
 
-| Código | Descripción | Intervención de IA |
-|--------|-------------|-------------------|
-| P1 | Organizar en paquetes modulares | Creó `persistence/` y `views/` |
-| P2 | Medición de tiempos | `time.perf_counter_ns()` |
-| P3 | Soporte para 2 casos | `run_case()` con generación dinámica |
-| P4 | Documentación de complejidad | Análisis teórico formal |
-| P5 | Docstrings en algoritmos | 15 archivos documentados |
-| P6 | Medición de memoria | `tracemalloc` para pico de memoria |
-| P7 | Verificación de resultados | `np.allclose()` para validar C=A×B |
-| P8 | Persistencia Excel | Reemplazó XML por Excel con openpyxl |
-| P9 | Corrección de bugs | Bugs identificados y corregidos |
+### Tabla Resumen
 
-### Participación Real
-
-| Etapa | Estudiante | IA |
-|-------|-----------|-----|
-| Diseño de algoritmos | 100% | 0% |
-| Estructura proyecto | 0% | 100% |
-| Persistencia Excel | 0% | 100% |
-| Corrección bugs | 30% | 70% |
-| Documentación | 30% | 70% |
+| Código | Prompt Original | Intervención de IA |
+|--------|----------------|--------------------|
+| P1 | Organizar código en paquetes modulares | Creó `persistence/` y `views/` |
+| P2 | Implementar medición de tiempos | `time.perf_counter_ns()` en `main.py` |
+| P3 | Estructurar main.py para 2 casos | `run_case()` con `matrix_generator()` |
+| P4 | Documentar análisis de complejidad | Análisis teórico formal |
+| P5 | Agregar docstrings a algoritmos | 15 archivos documentados |
+| P6 | Agregar medición de memoria | `tracemalloc` en `process_algorithm()` |
+| P7 | Agregar verificación de resultados | `np.allclose()` en verificación |
+| P8 | Cambiar persistencia a Excel | Reemplazó XML por Excel con openpyxl |
+| P9 | Corregir bugs de algoritmos | Bugs en III.5, IV.5, StrassenWinograd |
 
 ---
 
-## 10. Bugs Corregidos
+### P1: Organizar Código en Paquetes Modulares
 
-| Bug | Algoritmo | Fix |
-|-----|-----------|-----|
-| Indexación `C[i][k]` | IV.5 Enhanced | → `C[i][j]` |
-| Padding incorrecto | StrassenNaiv/Winograd | newSize potencia de 2 |
-| Parámetros `submit(N,N,P,M)` | III.5, IV.5 Enhanced | → `submit(N,P,M)` |
-| Overflow entero | StrassenWinograd | `[[0]]` → `[[0.0]]` |
-| Fórmulas incorrectas | StrassenWinograd | Reescrito completo |
+**Prompt Original:**
+```
+"Organiza el código existente en una estructura de paquetes Python:
+- src/algoritmos/ para los 15 algoritmos
+- src/persistence/ para lectura/escritura XML
+- src/views/ para visualización
+- main.py como punto de entrada
+Agrega __init__.py con exports apropiados."
+```
+
+**Intervención de IA:**
+Creó la arquitectura en capas con los paquetes `persistence/` y `views/`, implementando clases para manejo de resultados y visualización.
+
+**Archivos creados/modificados:**
+- `algoritmos/__init__.py`
+- `persistence/__init__.py`
+- `persistence/ResultData.py`
+- `persistence/Results.py`
+- `persistence/ResultFileHandler.py`
+- `persistence/ResultsManager.py`
+- `persistence/MatrixFileHandler.py`
+- `persistence/MatrixWrapper.py`
+- `views/__init__.py`
+- `views/ResultsViewer.py`
 
 ---
 
-## 11. Cómo Ejecutar
+### P2: Implementar Medición de Tiempos
+
+**Prompt Original:**
+```
+"Implementa una función que ejecute todos los algoritmos,
+mida el tiempo de ejecución en nanosegundos, y guarde
+los resultados en XML."
+```
+
+**Intervención de IA:**
+Implementó `process_algorithm()` en `main.py` usando `time.perf_counter_ns()` para máxima precisión.
+
+```python
+# [AI MODIFIED] - Agregado por IA
+def process_algorithm(algorithm_name, multiply_func, A, B, case_name):
+    start = time.perf_counter_ns()
+    C = multiply_func(A, B)
+    end = time.perf_counter_ns()
+    execution_time_ns = end - start
+    # ...
+```
+
+---
+
+### P3: Estructurar main.py para Dos Casos de Prueba
+
+**Prompt Original:**
+```
+"Configura main.py para soportar 2 casos de prueba con
+matrices cuadradas n×n donde n es factor de 2^n, con
+valores de mínimo 6 dígitos."
+```
+
+**Intervención de IA:**
+Configuró soporte para Caso1 y Caso2 con generación dinámica de matrices.
+
+```python
+# [AI MODIFIED] - Configuración por IA
+MIN_DIGITS = 7
+SIZES_CASO_1 = [16]
+SIZES_CASO_2 = [32]
+
+def matrix_generator(n, min_digits):
+    # [AI MODIFIED] - Genera matriz numpy con valores aleatorios de n dígitos
+    return np.random.randint(10**(min_digits-1), 10**min_digits, size=(n, n), dtype=np.int64)
+```
+
+---
+
+### P4: Documentación de Análisis de Complejidad
+
+**Prompt Original:**
+```
+"Documenta el análisis de complejidad de cada algoritmo
+en un documento formal. Incluye notación Big-O, análisis
+teórico del número de operaciones y predicciones de
+rendimiento."
+```
+
+**Intervención de IA:**
+Documentó análisis de complejidad en README.md y DISEÑO.md con notación Big-O, Theta y Omega.
+
+---
+
+### P5: Agregar Docstrings a Algoritmos
+
+**Prompt Original:**
+```
+"Agrega documentación tipo docstring a los 15 algoritmos
+incluyendo: descripción, complejidad computacional,
+parámetros y valor de retorno."
+```
+
+**Intervención de IA:**
+Agregó docstrings a los 15 archivos en `algoritmos/`.
+
+```python
+# [AI MODIFIED] - Docstring agregado por IA
+def multiply(A, B):
+    """
+    Multiplicación de matrices ingenua sobre arrays.
+
+    Complejidad Computacional:
+        - Tiempo: O(n³)
+        - Espacio: O(n²)
+
+    Parámetros:
+        A: Matriz de tamaño n×n
+        B: Matriz de tamaño n×n
+
+    Retorna:
+        Matriz C de tamaño n×n donde C = A × B
+    """
+```
+
+---
+
+### P6: Agregar Medición de Memoria
+
+**Prompt Original:**
+```
+"Agrega medición de memoria a cada ejecución usando
+tracemalloc para obtener el pico de memoria en KB."
+```
+
+**Intervención de IA:**
+Integró `tracemalloc` en `process_algorithm()` para medir pico de memoria.
+
+```python
+# [AI MODIFIED] - Agregado por IA
+import tracemalloc
+
+def process_algorithm(...):
+    tracemalloc.start()
+    C = multiply_func(A, B)
+    current, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    peak_kb = peak / 1024
+```
+
+---
+
+### P7: Agregar Verificación de Resultados
+
+**Prompt Original:**
+```
+"Agrega verificación de resultados comparando el
+resultado de cada algoritmo con np.matmul para
+validar que C = A × B."
+```
+
+**Intervención de IA:**
+Implementó verificación con `np.allclose()`.
+
+```python
+# [AI MODIFIED] - Verificación agregada por IA
+def verify_result(A, B, C):
+    expected = np.matmul(A, B)
+    return np.allclose(C, expected, rtol=1e-5, atol=1e-8)
+```
+
+---
+
+### P8: Cambiar Persistencia a Excel
+
+**Prompt Original:**
+```
+"Cambia la persistencia de XML a Excel usando openpyxl.
+Genera gráficos comparativos del rendimiento."
+```
+
+**Intervención de IA:**
+Reemplazó XML por Excel con openpyxl, agregando generación de gráficos con matplotlib.
+
+**Archivos modificados:**
+- `persistence/MatrixFileHandler.py` - Cambio a Excel
+- `persistence/ResultsExcelHandler.py` - Resultados en Excel
+- `main.py` - Integración de persistencia
+
+---
+
+### P9: Corrección de Bugs de Algoritmos
+
+**Prompt Original:**
+```
+"Revisa los algoritmos y corrige los bugs que encuentres.
+Los algoritmos que fallan la verificación son:
+- III.5 Enhanced Parallel Block
+- IV.5 Enhanced Parallel Block
+- StrassenWinograd"
+```
+
+**Intervención de IA:**
+Identificó y corrigió los siguientes bugs:
+
+#### Bug 1: Parámetros incorrectos en ThreadPoolExecutor (III.5, IV.5)
+
+**Problema:** La segunda llamada a `executor.submit()` usaba `N, N, P, M` en lugar de `N, P, M`.
+
+```python
+# [AI MODIFIED] - Bug corregido por IA
+# INCORRECTO (original):
+executor.submit(block_multiply_section, matrizA, matrizB, matrizRes, mid_point, N, N, P, M, block_size)
+
+# CORRECTO:
+executor.submit(block_multiply_section, matrizA, matrizB, matrizRes, mid_point, N, P, M, block_size)
+```
+
+#### Bug 2: Indexación incorrecta en IV.5 Enhanced Parallel
+
+**Problema:** Usaba `C[i][k]` en lugar de `C[i][j]` en el bucle interno.
+
+```python
+# [AI MODIFIED] - Bug corregido por IA
+# INCORRECTO (original):
+C[i][k] += temp1 + temp2
+
+# CORRECTO:
+C[i][j] += temp1 + temp2
+```
+
+#### Bug 3: Padding incorrecto en Strassen (Naiv y Winograd)
+
+**Problema:** newSize = 17 para input 16×16, debía ser potencia de 2.
+
+```python
+# [AI MODIFIED] - Bug corregido por IA
+# INCORRECTO (original):
+newSize = n + 1 if n % 2 == 1 else n
+
+# CORRECTO:
+newSize = 1
+while newSize < n:
+    newSize *= 2
+```
+
+#### Bug 4: Overflow de entero en StrassenWinograd
+
+**Problema:** Matriz resultado inicializada como `[[0]]` (int) causaba overflow.
+
+```python
+# [AI MODIFIED] - Bug corregido por IA
+# INCORRECTO (original):
+result = [[0] * size] * size
+
+# CORRECTO:
+result = [[0.0] * size] * size
+```
+
+#### Bug 5: Fórmulas incorrectas en StrassenWinograd
+
+**Problema:** El algoritmo implementaba fórmulas de Winograd incorrectas, causando resultados erróneos para tamaños ≥32×32.
+
+**Solución:** Reescritura completa del algoritmo usando la fórmula estándar de Strassen-Winograd con variables temporales separadas para cada producto M1-M7.
+
+---
+
+## 10. Cómo Ejecutar
 
 ```bash
 cd Proyecto_Python
@@ -218,7 +503,7 @@ SIZES_CASO_2 = [1024]
 
 ---
 
-## 12. Conclusiones
+## 11. Conclusiones
 
 1. **Matrices pequeñas (<64×64)**: Naiv* y Winograd* son más eficientes por bajo overhead
 2. **Matrices grandes (>512×512)**: Strassen* y paralelos muestran mejor rendimiento
@@ -227,7 +512,7 @@ SIZES_CASO_2 = [1024]
 
 ---
 
-## 13. Aclaración Importante
+## 12. Aclaración Importante
 
 Los 15 algoritmos son implementaciones conocidas de la literatura académica obtenidas de un repositorio GitHub público. La IA协助 únicamente en tareas técnicas de organización, medición, documentación y corrección de bugs, **no en el diseño de los algoritmos**.
 
