@@ -1,7 +1,4 @@
-# Proyecto: Multiplicación de Matrices Grandes
-
-## Universidad del Quindío
-### Programa de Ingeniería de Sistemas y Computación
+# Documento de diseño: Multiplicación de Matrices Grandes
 
 ---
 
@@ -156,7 +153,7 @@ Los procesadores modernos tienen múltiples niveles de caché:
 
 **Estrategia de optimización**: Dividir matrices en bloques que quepan en caché L2.
 
-### 5.3 paging y Swap
+### 5.3 Paging y Swap
 
 Para matrices grandes que no caben en RAM:
 - **Linux**: `vm.swappiness`, `/proc/sys/vm`
@@ -271,7 +268,7 @@ Proyecto_Multiplicacion_Matrices/
 │   ├── src/
 │   │   ├── main.py                      # Punto de entrada
 │   │   ├── algoritmos/                   # 15 algoritmos
-│   │   │   ├── __init__.py               # Exports (prompt 3)
+│   │   │   ├── __init__.py               # Exports
 │   │   │   ├── NaivOnArray.py             # Algoritmo 1
 │   │   │   ├── NaivLoopUnrollingTwo.py   # Algoritmo 2
 │   │   │   ├── NaivLoopUnrollingFour.py   # Algoritmo 3
@@ -287,71 +284,249 @@ Proyecto_Multiplicacion_Matrices/
 │   │   │   ├── IV_5_Enhanced_Parallel_Block.py # Algoritmo 13
 │   │   │   ├── V_3_Sequential_Block.py   # Algoritmo 14
 │   │   │   └── V_4_Parallel_Block.py     # Algoritmo 15
-│   │   ├── persistence/                  # Persistencia XML
+│   │   ├── persistence/                  # Persistencia Excel
 │   │   │   ├── ResultData.py
 │   │   │   ├── ResultFileHandler.py
 │   │   │   ├── Results.py
 │   │   │   ├── ResultsManager.py
-│   │   │   └── MatrixFileHandler.py
+│   │   │   ├── MatrixFileHandler.py
+│   │   │   └── MatrixWrapper.py
 │   │   └── views/                       # Visualización
 │   │       └── ResultsViewer.py
-│   ├── .gitignore                      # (prompt 2)
-│   └── README.md                       # Este archivo
+│   ├── .gitignore
+│   └── requirements.txt
 ├── .gitignore
-└── README.md
+├── README.md
+└── DISEÑO.md
 ```
 
 ---
 
 ## 9. Prompts Utilizados en el Desarrollo
 
-Documentación de las iteraciones con IA que modificaron el proyecto:
+Documentación técnica de las iteraciones con IA que modificaron el proyecto. **Nota:** Los prompts documentados aquí fueron realizados **después** de que el estudiante ya tenía los 15 algoritmos implementados y funcionales.
 
-| Código | Prompt | Descripción | Archivos |
-|--------|--------|-------------|----------|
-| **1** | Reescribir main.py con soporte para 2 casos de prueba con matrices cuadradas 2^n | Creación de estructura principal con casos separados |
-| **2** | Crear .gitignore para proyecto Python | Exclusión de archivos temporales |
-| **3** | Agregar exports de algoritmos en `__init__.py` | Importación correcta de los 15 algoritmos |
-| **4** | Eliminar proyecto Java, enfocarse solo en Python | Reducción del proyecto a un solo lenguaje |
-| **5** | Subir cambios al repositorio de GitHub | Publicación en EddSanchezz/Proyecto_Multiplicacion_Matrices |
-| **6** | Reescribir README.md completo con análisis descriptivo | Documentación del proyecto |
+### 9.1 Tabla Resumen de Prompts
 
-### Detalle de Prompts
+| Código | Descripción Breve | Decisión Algorítmica Principal |
+|--------|-------------------|-------------------------------|
+| **P1** | Organizar código en paquetes modulares | Arquitectura en capas: algoritmos, persistence, views |
+| **P2** | Implementar medición de tiempos | Uso de time.perf_counter_ns() y persistencia XML |
+| **P3** | Estructurar main.py para 2 casos | Soporte para Caso1 (512×512) y Caso2 (1024×1024) |
+| **P4** | Documentar análisis de complejidad | Análisis teórico y documentación formal |
+| **P5** | Agregar docstrings a algoritmos | Documentación tipo docstring a los 15 algoritmos |
+| **P6** | Agregar medición de memoria | Uso de tracemalloc para medir pico de memoria |
+| **P7** | Agregar verificación de resultados | Validación C = A × B usando NumPy como referencia |
+| **P8** | Cambiar persistencia a Excel | Reemplazo de XML por Excel con openpyxl |
 
-#### Prompt 1: Estructura Principal
-```markdown
-"Crea un main.py que soporte 2 casos de prueba con matrices cuadradas n×n 
-donde n es factor de 2^n, con valores de mínimo 6 dígitos"
+### 9.2 Detalle de Prompts
+
+---
+
+#### P1: Organizar Código en Paquetes Modulares
+
+**Prompt Original:**
+```
+"Organiza el código existente en una estructura de paquetes Python:
+- src/algoritmos/ para los 15 algoritmos
+- src/persistence/ para lectura/escritura XML
+- src/views/ para visualización
+- main.py como punto de entrada
+Agrega __init__.py con exports apropiados."
 ```
 
-#### Prompt 2: Git Ignore
-```markdown
-"Crea un .gitignore para proyecto Python que excluya __pycache__, 
-.venv, y archivos XML de resultados"
+**Decisión Algorítmica:**
+- Arquitectura en capas separada:
+  - **Capa de algoritmos**: Lógica pura de multiplicación (ya existente)
+  - **Capa de persistencia**: XML (lectura/escritura de matrices y resultados)
+  - **Capa de views**: Visualización con tkinter/matplotlib
+- Se implementó el patrón DataManager para resultados:
+  - `Results`: Contenedor de lista de resultados
+  - `ResultData`: Dataclass con size, algorithm, language, executionTime, case, rows, cols
+- Se creó `ResultsManager` para combinar resultados de múltiples archivos XML
+
+**Archivos Creados por IA:**
+- `algoritmos/__init__.py`
+- `persistence/__init__.py`
+- `views/__init__.py`
+- `persistence/ResultData.py`
+- `persistence/Results.py`
+- `persistence/ResultFileHandler.py`
+- `persistence/ResultsManager.py`
+- `persistence/MatrixFileHandler.py`
+- `persistence/MatrixWrapper.py`
+- `views/ResultsViewer.py`
+
+---
+
+#### P2: Implementar Medición de Tiempos
+
+**Prompt Original:**
+```
+"Implementa una función que ejecute todos los algoritmos,
+mida el tiempo de ejecución en nanosegundos, y guarde
+los resultados en XML."
 ```
 
-#### Prompt 3: Imports de Algoritmos
-```markdown
-"Agrega todos los exports de los 15 algoritmos en __init__.py para 
-permitir imports limpios"
+**Decisión Algorítmica:**
+- Se implementó `process_algorithm()` en main.py que:
+  - Mide tiempo con `time.perf_counter_ns()` (precisión de nanosegundos)
+  - Registra resultados en XML con metadatos completos (size, algorithm, case, rows, cols)
+  - Usa el caso de prueba "Caso1" o "Caso2" para diferenciar ejecuciones
+
+**Archivos Editados por IA:**
+- `main.py` (función `process_algorithm()`)
+- `persistence/ResultFileHandler.py`
+
+---
+
+#### P3: Estructurar main.py para Dos Casos de Prueba
+
+**Prompt Original:**
+```
+"Configura main.py para soportar 2 casos de prueba con
+matrices cuadradas n×n donde n es factor de 2^n, con
+valores de mínimo 6 dígitos."
 ```
 
-#### Prompt 4: Limpieza del Proyecto
-```markdown
-"Elimina todo el proyecto Java, enfócate solo en Python con los 
-15 algoritmos implementados"
+**Decisión Algorítmica:**
+- Configuración flexible con constantes:
+  - `MIN_DIGITS = 7` (valores de 1,000,000 a 9,999,999)
+  - `SIZES_CASO_1 = [512]` → 512×512 = 2⁹
+  - `SIZES_CASO_2 = [1024]` → 1024×1024 = 2¹⁰
+- Funciones de generación y persistencia:
+  - `matrix_generator(n, min_digits)`: Genera matriz numpy con valores aleatorios de n dígitos
+  - `save_matrix()` / `load_matrix()`: Persistencia XML de matrices
+  - `run_case()`: Ejecuta todos los algoritmos para un caso
+
+**Archivos Editados por IA:**
+- `main.py` (completamente reescrito)
+
+---
+
+#### P4: Documentación de Análisis de Complejidad
+
+**Prompt Original:**
+```
+"Crea documentación técnica formal:
+- Análisis de complejidad de cada algoritmo
+- Uso de memoria y consideraciones de caché
+- Comportamiento según tamaño de entrada
+- Prompts utilizados durante el desarrollo"
 ```
 
-#### Prompt 5: Publicación
-```markdown
-"Sube los cambios al repositorio eddsanchezz/Proyecto_Multiplicacion_Matrices"
+**Decisión Algorítmica:**
+- Se documentó formalmente:
+  - Tablas de complejidad O(n³), O(n^2.807), O(n³/p)
+  - Predicciones de rendimiento basadas en análisis teórico
+  - Puntos de cruce donde un algoritmo supera a otro
+  - Análisis de comportamiento por tamaño de entrada
+- Se creó el documento `DISEÑO.md` con especificaciones formales
+
+**Archivos Editados/Creados por IA:**
+- `README.md` (completamente reescrito)
+- `DISEÑO.md` (creado)
+
+---
+
+#### P5: Agregar Docstrings a Algoritmos
+
+**Prompt Original:**
+```
+"Agrega docstrings completos a los 15 algoritmos con:
+- Complejidad computacional
+- Descripción del algoritmo
+- Parámetros y retorno
+- Referencia bibliográfica"
 ```
 
-#### Prompt 6: Documentación
-```markdown
-"Crea un README.md completo con análisis de complejidad, uso de memoria, 
-comportamiento por tamaño, y documentation descriptiva"
+**Decisión Algorítmica:**
+- Se agregaron docstrings a cada algoritmo incluyendo:
+  - Complejidad temporal y espacial
+  - Número de multiplicaciones escalares
+  - Descripción de la técnica utilizada
+  - Parámetros de entrada y salida
+  - Referencia bibliográfica (Strassen 1969, Winograd 1968)
+
+**Archivos Editados por IA:**
+- Los 15 archivos en `algoritmos/`
+
+---
+
+#### P6: Agregar Medición de Memoria
+
+**Prompt Original:**
 ```
+Agrega medición de memoria a cada algoritmo usando tracemalloc.
+Muestra el pico de memoria en KB en los resultados.
+```
+
+**Decisión Algorítmica:**
+- Se agregó `tracemalloc.start()` antes de cada ejecución y `tracemalloc.stop()` después
+- Se calcula `peak = tracemalloc.get_traced_memory()[1]` para el pico de memoria
+- Se incluye columna "Memoria (KB)" en Excel con valores en kilobytes
+- Se genera segundo gráfico para сравнениe de memoria
+
+**Archivos Editados por IA:**
+- `main.py` (funciones `process_algorithm()`)
+- `persistence/ResultsExcelHandler.py`
+
+---
+
+#### P7: Agregar Verificación de Resultados
+
+**Prompt Original:**
+```
+Agrega verificación de que los resultados de cada algoritmo
+son correctos comparando con NumPy.matmul. Muestra [OK] o [FAIL]
+en la tabla de resultados.
+```
+
+**Decisión Algorítmica:**
+- Se implementó `verify_result(matrix_a, matrix_b, result)` usando `np.allclose()`
+- Cada algoritmo ejecuta y verifica antes de guardar resultados
+- Se incluye columna "Verificado" en Excel con "SI" o "NO"
+- Se muestra ✓ [OK] o ✗ [FAIL] en terminal durante ejecución
+
+**Archivos Editados por IA:**
+- `main.py` (función `verify_result()`)
+
+---
+
+#### P8: Cambiar Persistencia a Excel
+
+**Prompt Original:**
+```
+Reemplaza la persistencia XML por Excel usando openpyxl.
+Genera archivos .xlsx con formato profesional y gráficos embebidos.
+```
+
+**Decisión Algorítmica:**
+- Se crearon `MatrixFileHandler.py` y `ResultsExcelHandler.py` para Excel
+- Se generó gráfico de barras comparativo con matplotlib
+- Se embebió imagen PNG dentro del Excel
+- Se usó formato profesional con headers, bordes y colores
+
+**Archivos Creados por IA:**
+- `persistence/MatrixFileHandler.py`
+- `persistence/ResultsExcelHandler.py`
+
+**Archivos Editados por IA:**
+- `main.py`
+- `README.md` (sección de estructura actualizada)
+
+---
+
+### 9.3 Decisiones de Diseño (Implementadas por el Estudiante)
+
+Las siguientes decisiones fueron tomadas por el estudiante antes de interactuar con la IA:
+
+| Decisión | Algoritmos Afectados | Justificación |
+|----------|---------------------|---------------|
+| Interfaz unificada `multiply()` | Todos | Facilita testing y comparación directa |
+| block_size = N | III, IV, V | Simplifica implementación, bloque = matriz completa |
+| ThreadPoolExecutor | III.4, IV.4, V.4 | Paralelismo por división de filas |
+| max_workers=2 | III.5, IV.5, V.5 | Versiones "Enhanced" con workers fijos para estabilidad |
 
 ---
 
@@ -359,14 +534,21 @@ comportamiento por tamaño, y documentation descriptiva"
 
 ### 10.1 Requisitos
 - Python 3.8+
-- numpy
+- numpy>=1.24.0
+- matplotlib>=3.7.0
+- openpyxl>=3.1.0
 - tkinter (incluido en Python)
 
 ### 10.2 Instalación
 ```bash
 cd Proyecto_Python
-pip install numpy
+pip install -r requirements.txt
 ```
+
+requirements.txt incluye:
+- numpy>=1.24.0
+- matplotlib>=3.7.0
+- openpyxl>=3.1.0
 
 ### 10.3 Ejecución
 
@@ -376,26 +558,34 @@ SIZES_CASO_1 = [512]  # Caso 1: 512×512
 SIZES_CASO_2 = [1024]  # Caso 2: 1024×1024
 ```
 
-2. **Descomentar líneas de ejecución**:
-```python
-if __name__ == "__main__":
-    run_case(SIZES_CASO_1, "Caso1")  # Descomentar
-    run_case(SIZES_CASO_2, "Caso2")  # Descomentar
-    display_results()
-```
-
-3. **Ejecutar**:
+2. **Ejecutar**:
 ```bash
+cd Proyecto_Python
 python src/main.py
 ```
 
+**Nota:** El programa ejecuta automáticamente ambos casos y genera los archivos Excel con gráficos.
+
 ### 10.4 Ver Resultados
 
-Los resultados se guardan en:
-- Matrices: `src/main/resources/matrices/`
-- Tiempos: `src/main/resources/results/`
+Los resultados se guardan en formato Excel:
+- Matrices: `src/main/resources/matrices/matrix_[Caso]_[Tamaño].xlsx`
+- Tiempos: `src/main/resources/results/python_results.xlsx`
+- Gráfico PNG: `src/main/resources/results/grafico_comparativo.png`
 
-El gráfico de barras se muestra automáticamente.
+Archivos generados:
+| Archivo | Descripción |
+|---------|-------------|
+| `matrix_Caso1_512x512.xlsx` | Matrices del caso 1 (Hojas: Matriz A, Matriz B, Info) |
+| `matrix_Caso2_1024x1024.xlsx` | Matrices del caso 2 (Hojas: Matriz A, Matriz B, Info) |
+| `python_results.xlsx` | Tiempos de ejecución (Hojas: Caso1, Caso2, Comparativa, Gráfico) |
+| `grafico_comparativo.png` | Imagen del gráfico comparativo |
+
+El archivo `python_results.xlsx` contiene:
+- **Hoja "Caso1"**: Tiempos para matrices 512×512
+- **Hoja "Caso2"**: Tiempos para matrices 1024×1024
+- **Hoja "Comparativa"**: Tabla resumen comparando ambos casos
+- **Hoja "Gráfico"**: Imagen del gráfico de barras comparativo
 
 ---
 
@@ -460,6 +650,114 @@ Universidad del Quindío - Ingeniería de Sistemas y Computación
 ## 14. Licencia
 
 Para uso académico - Universidad del Quindío
+
+---
+
+## 15. Declaración de Uso de Inteligencia Artificial
+
+En cumplimiento de las políticas académicas de transparencia, se declara el uso de inteligencia artificial en las siguientes etapas del desarrollo.
+
+### 15.1 Participación del Estudiante (Trabajo Propio)
+
+El estudiante realizó de manera independiente las siguientes tareas:
+
+| # | Actividad | Descripción | Evidencia |
+|---|----------|-------------|-----------|
+| A1 | Descarga de algoritmos | Se descargaron los algoritmos de multiplicación de matrices de un repositorio GitHub público | Código fuente con implementaciones originales |
+| A2 | Adaptación de interfaz | Se adaptaron los algoritmos para cumplir con los requisitos del proyecto: interfaz unificada `multiply(A, B)` y soporte para matrices Python estándar | 15 archivos en `algoritmos/` |
+| A3 | Selección de casos de prueba | Se definieron los tamaños 512×512 y 1024×1024 como casos de prueba | Constantes `SIZES_CASO_1`, `SIZES_CASO_2` en main.py |
+| A4 | Diseño de pruebas | Se diseñaron los casos de prueba y metodología de verificación | main.py: `run_case()`, `process_algorithm()` |
+
+### 15.2 Interacciones con IA Durante el Desarrollo
+
+La inteligencia artificial fue utilizada para协助 en tareas técnicas después de que el estudiante ya tenía los algoritmos implementados y funcionales.
+
+| Código | Prompt (Resumen) | Intervención de IA | Archivos Modificados |
+|--------|-----------------|---------------------|---------------------|
+| **P1** | Organizar código en paquetes modulares | Creó la estructura de paquetes `persistence/` y `views/` con susrespectivos módulos | 10 archivos en `persistence/`, `views/` |
+| **P2** | Implementar medición de tiempos | Agregó medición de tiempos con `time.perf_counter_ns()` y persistencia XML | `main.py`, `ResultFileHandler.py` |
+| **P3** | Estructurar main.py para 2 casos | Configuró soporte para Caso1 (512×512) y Caso2 (1024×1024) | `main.py` |
+| **P4** | Documentar análisis de complejidad | Documentó análisis de complejidad, comportamiento por tamaño, y created DISEÑO.md | `README.md`, `DISEÑO.md` |
+| **P5** | Agregar docstrings a algoritmos | Agregó documentación formal tipo docstring a los 15 algoritmos | 15 archivos en `algoritmos/` |
+| **P6** | Agregar medición de memoria | Agregó tracemalloc para pico de memoria en KB | `main.py`, `ResultsExcelHandler.py` |
+| **P7** | Agregar verificación de resultados | Agregó np.allclose() para validar C = A × B | `main.py` |
+| **P8** | Cambiar persistencia a Excel | Reemplazó XML por Excel con gráficos | `MatrixFileHandler.py`, `ResultsExcelHandler.py` |
+| **P9** | Corregir bugs de algoritmos | Identificó y corrigió bugs en III.5, IV.5, StrassenWinograd | 3 archivos en `algoritmos/` |
+
+### 15.3 Detalle de Intervenciones de IA
+
+---
+
+**P1 - Modularización del Proyecto:**
+Se le pidió a la IA que reorganizara el código existente (ya con los algoritmos adaptados por el estudiante) en una estructura de paquetes profesional. La IA creó los paquetes `persistence/` (manejo de XML) y `views/` (visualización), implementando clases como `Results`, `ResultData`, `ResultsManager`, `MatrixWrapper`, y `ResultsViewer`. **Archivos creados:** 10 archivos nuevos.
+
+**P2 - Medición de Tiempos:**
+Se le pidió a la IA que implementara una función para medir los tiempos de ejecución de cada algoritmo. La IA creó `process_algorithm()` en `main.py` usando `time.perf_counter_ns()` para máxima precisión en nanosegundos. **Archivos editados:** `main.py`, `ResultFileHandler.py`.
+
+**P3 - Soporte para Dos Casos de Prueba:**
+Se le pidió a la IA que reconfigurara `main.py` para soportar dos casos de prueba diferenciados (Caso1 y Caso2). La IA implementó `run_case()` con generación dinámica de matrices usando `MIN_DIGITS = 7` para garantizar 6+ dígitos. **Archivos editados:** `main.py`.
+
+**P4 - Documentación Técnica:**
+Se le pidió a la IA que reescribiera completamente la documentación. La IA documentó análisis de complejidad, predicciones de rendimiento, puntos de cruce, y creó el documento `DISEÑO.md` con especificaciones formales. **Archivos editados:** `README.md`, `DISEÑO.md`.
+
+**P5 - Documentación de Algoritmos:**
+Se le pidió a la IA que agregara docstrings completos a los 15 algoritmos. La IA agregó documentación formal incluyendo complejidad computacional, técnica utilizada, parámetros, retorno y referencias bibliográficas. **Archivos editados:** 15 archivos en `algoritmos/`.
+
+### 15.4 Nivel de Participación Real
+
+| Etapa | Estudiante | IA | Notas |
+|------|-----------|-----|-------|
+| Diseño de algoritmos | 100% | 0% | Algoritmos de repositorio público |
+| Implementación inicial | 100% | 0% | Adaptación de interfaz `multiply()` |
+| Estructura del proyecto | 0% | 100% | Paquetes `persistence/`, `views/` |
+| Persistencia XML | 0% | 100% | Clases de lectura/escritura |
+| Persistencia Excel | 0% | 100% | Reemplazo total de XML por Excel |
+| Medición de tiempos | 20% | 80% | Estudiante diseñó metodología, IA implementó |
+| Medición de memoria | 10% | 90% | Estudiante solicitó, IA implementó con tracemalloc |
+| Verificación de resultados | 10% | 90% | Estudiante solicitó, IA implementó con np.allclose |
+| Corrección de bugs algorítmicos | 30% | 70% | IA identificó y corrigió bugs de padding/indexación |
+| Documentación | 30% | 70% | Estudiante proporcionó contexto, IA documentó |
+| Visualización | 0% | 100% | `ResultsViewer` con matplotlib |
+
+### 15.5 Correcciones de Bugs Identificados
+
+Durante el desarrollo, se identificaron y corrigieron los siguientes bugs en los algoritmos originales:
+
+| Bug | Algoritmo | Descripción | Fix Aplicado |
+|-----|-----------|-------------|--------------|
+| Indexación incorrecta | IV.5 Enhanced Parallel | `C[i][k]` en lugar de `C[i][j]` | Corregido a `C[i][j]` |
+| Padding no potencia de 2 | StrassenNaiv | newSize=17 para input 16×16 | newSize=16 (potencia de 2) |
+| Padding no potencia de 2 | StrassenWinograd | newSize=17 para input 16×16 | newSize=16 (potencia de 2) |
+| Parámetros incorrectos en ThreadPoolExecutor | III.5 Enhanced Parallel | Segunda llamada `submit(N,N,P,M)` en lugar de `submit(N,P,M)` | Corregido |
+| Parámetros incorrectos en ThreadPoolExecutor | IV.5 Enhanced Parallel | Segunda llamada `submit(N,N,P,M)` en lugar de `submit(N,P,M)` | Corregido |
+| Tipo de dato entero (overflow) | StrassenWinograd | Matriz resultado inicializada como `[[0]]` (int) | Cambiado a `[[0.0]]` (float) |
+| Fórmula incorrecta | StrassenWinograd | Algoritmo con fórmulas de Winograd incorrectas | Reescrito con fórmula estándar de Strassen-Winograd |
+
+### 15.6 Detalle de Correcciones
+
+#### Bug: Parámetros incorrectos en III.5 y IV.5 Enhanced Parallel
+
+**Problema:** La segunda llamada a `executor.submit()` en ambos algoritmos pasaba `N, N, P, M` en lugar de `N, P, M`.
+
+```python
+# INCORRECTO:
+executor.submit(block_multiply_section, matrizA, matrizB, matrizRes, mid_point, N, N, P, M, block_size)
+
+# CORRECTO:
+executor.submit(block_multiply_section, matrizA, matrizB, matrizRes, mid_point, N, P, M, block_size)
+```
+
+#### Bug: StrassenWinograd con overflow y fórmulas incorrectas
+
+**Problema 1:** La matriz resultado se inicializaba como enteros (`[[0] * M]`), causando overflow en matrices grandes.
+
+**Problema 2:** El algoritmo implementaba fórmulas de Winograd de forma incorrecta, causando resultados erróneos para tamaños de 32×32 y mayores.
+
+**Solución:** Reescritura completa del algoritmo usando la fórmula estándar de Strassen-Winograd con variables temporales separadas para cada producto M1-M7.
+
+### 15.7 Aclaración importante
+
+Los 15 algoritmos de multiplicación de matrices (Naiv, Winograd, Strassen, Block) son implementaciones conocidas de la literatura académica y fueron obtenidos de un repositorio GitHub público por el estudiante. La IA协助 únicamente en tareas técnicas de organización, medición, documentación y corrección de bugs, **no en la invención o diseño de los algoritmos**.
 
 ---
 

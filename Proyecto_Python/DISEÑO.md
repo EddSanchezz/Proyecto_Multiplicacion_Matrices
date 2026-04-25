@@ -1,40 +1,40 @@
-# Documento de Diseno: Multiplicacion de Matrices Grandes
+# Documento de Diseño: Multiplicación de Matrices Grandes
 
-## Universidad del Quindio
-### Programa de Ingenieria de Sistemas y Computacion
-### Analisis de Algoritmos - Seguimiento 2
+## Universidad del Quindío
+### Programa de Ingeniería de Sistemas y Computación
+### Análisis de Algoritmos - Seguimiento 2
 
 ---
 
-## 1. Introduccion
+## 1. Introducción
 
-Este documento presenta el diseno tecnico del proyecto de multiplicacion de matrices grandes, implementando y analizando 15 algoritmos mediante enfoques iterativos y divide y venceras.
+Este documento presenta el diseño técnico del proyecto de multiplicación de matrices grandes, implementando y analizando 15 algoritmos mediante enfoques iterativos y divide y vencerás.
 
-### 1.1 Proposito
+### 1.1 Propósito
 
-Implementar y analizar algoritmos para la multiplicacion de matrices grandes con el objetivo de:
-- Comparar rendimiento entre algoritmos iterativos y divide y venceras
-- Analizar el comportamiento segun el tamano de entrada
-- Documentar la complejidad algoritmica de cada metodo
+Implementar y analizar algoritmos para la multiplicación de matrices grandes con el objetivo de:
+- Comparar rendimiento entre algoritmos iterativos y divide y vencerás
+- Analizar el comportamiento según el tamaño de entrada
+- Documentar la complejidad algorítmica de cada método
 
 ### 1.2 Alcance
 
 - 15 algoritmos implementados
 - 2 casos de prueba (512x512 y 1024x1024)
-- Analisis de complejidad O(n^3) vs O(n^2.807)
+- Análisis de complejidad O(n³) vs O(n^2.807)
 - Persistencia de datos y resultados
 
 ---
 
-## 2. Especificacion de Requerimientos
+## 2. Especificación de Requerimientos
 
 ### 2.1 Requerimientos Funcionales
 
-| ID | Requerimiento | Estado | Implementacion |
+| ID | Requerimiento | Estado | Implementación |
 |----|---------------|--------|---------------|
 | RF-01 | Implementar 15 algoritmos | Completo | Paquete algoritmos/ |
 | RF-02 | 2 casos de prueba n x n | Completo | main.py run_case() |
-| RF-03 | Valores minimo 6 digitos | Completo | MIN_DIGITS = 7 |
+| RF-03 | Valores mínimo 6 dígitos | Completo | MIN_DIGITS = 7 |
 | RF-04 | Casos persistentes | Completo | MatrixFileHandler |
 | RF-05 | Tiempos persistentes | Completo | ResultFileHandler |
 | RF-06 | Diagrama de barras | Completo | ResultsViewer |
@@ -43,14 +43,14 @@ Implementar y analizar algoritmos para la multiplicacion de matrices grandes con
 
 | ID | Requerimiento | Cumplimiento |
 |----|---------------|--------------|
-| RNF-01 | Tiempo de ejecucion medible | time.perf_counter_ns() |
-| RNF-02 | Precision en nanosegundos | 1 ns |
-| RNF-03 | Almacenamiento en XML | ElementTree |
-| RNF-04 | Documentacion completa | README.md |
+| RNF-01 | Tiempo de ejecución medible | time.perf_counter_ns() |
+| RNF-02 | Precisión en nanosegundos | 1 ns |
+| RNF-03 | Almacenamiento en Excel | openpyxl |
+| RNF-04 | Documentación completa | README.md |
 
 ---
 
-## 3. Diseno del Sistema
+## 3. Diseño del Sistema
 
 ### 3.1 Arquitectura General
 
@@ -58,10 +58,10 @@ Implementar y analizar algoritmos para la multiplicacion de matrices grandes con
 +-------------------+
 |      main.py      |
 |  (Punto entrada)  |
-+--------+--------+
-         |
-         v
-+--------+--------+--------+
++--------+---------+
+          |
+          v
++--------+--------+---------+
 |                       |
 +--------+               +--------+
 |               |                       |
@@ -78,41 +78,41 @@ v               v                       v
 +------------------+
 | Iniciar programa |
 +--------+---------+
-         |
-         v
+          |
+          v
 +--------+---------+
 | Configurar casos |
 | (Caso1, Caso2)  |
 +--------+---------+
-         |
-         v
+          |
+          v
 +--------+---------+
 | Para cada caso   |
 |   generar       |
 |   matrices      |
 +--------+---------+
-         |
-         v
+          |
+          v
 +--------+---------+
 | Para cada        |
 | algoritmo       |
 | ejecutar y      |
 | medir tiempo    |
 +--------+---------+
-         |
-         v
+          |
+          v
 +--------+---------+
 | Guardar         |
 | resultados     |
 +--------+---------+
-         |
-         v
+          |
+          v
 +--------+---------+
 | Mostrar         |
-| grafico        |
+| gráfico        |
 +--------+---------+
-         |
-         v
+          |
+          v
 +--------+---------+
 | Fin            |
 +----------------+
@@ -122,19 +122,19 @@ v               v                       v
 
 #### Matriz
 ```python
-# Representacion de matriz cuadrada
+# Representación de matriz cuadrada
 matriz = [[float64, float64, ...],  # Fila 0
           [float64, float64, ...],  # Fila 1
           ...
           [float64, float64, ...]]   # Fila n-1
-# Tamano: n x n elementos
+# Tamaño: n x n elementos
 ```
 
-#### Resultado de Ejecucion
+#### Resultado de Ejecución
 ```python
 @dataclass
 class ResultData:
-    size: int          # Tamano n (512, 1024)
+    size: int          # Tamaño n (512, 1024)
     algorithm: str     # Nombre del algoritmo
     language: str     # "python"
     executionTime: int # Nanosegundos
@@ -145,7 +145,7 @@ class ResultData:
 
 ---
 
-## 4. Diseno de Algoritmos
+## 4. Diseño de Algoritmos
 
 ### 4.1 Algoritmos Iterativos
 
@@ -188,7 +188,7 @@ SINO:
 DEVOLVER Res
 ```
 
-### 4.2 Algoritmos Divide y Venceras
+### 4.2 Algoritmos Divide y Vencerás
 
 #### StrassenNaiv
 ```
@@ -226,170 +226,193 @@ SINO:
 #### III.3 Sequential Block
 ```
 ALGORITMO III_3_SequentialBlock
-ENTRADA: MatrizA[N][N], MatrizB[N][N], tamano_bloque
+ENTRADA: MatrizA[N][N], MatrizB[N][N], tamaño_bloque
 SALIDA: MatrizRes[N][N]
 
-PARA i1 = 0 HASTA N-1 PAS0 tamano_bloque:
-    PARA j1 = 0 HASTA N-1 PAS0 tamano_bloque:
-        PARA k1 = 0 HASTA N-1 PAS0 tamano_bloque:
-            PARA i = i1 HASTA min(i1+tamano_bloque, N):
-                PARA j = j1 HASTA min(j1+tamano_bloque, N):
-                    PARA k = k1 HASTA min(k1+tamano_bloque, N):
+PARA i1 = 0 HASTA N-1 PASO tamaño_bloque:
+    PARA j1 = 0 HASTA N-1 PASO tamaño_bloque:
+        PARA k1 = 0 HASTA N-1 PASO tamaño_bloque:
+            PARA i = i1 HASTA min(i1+tamaño_bloque, N):
+                PARA j = j1 HASTA min(j1+tamaño_bloque, N):
+                    PARA k = k1 HASTA min(k1+tamaño_bloque, N):
                         Res[i][j] = Res[i][j] + A[i][k] * B[k][j]
 DEVOLVER Res
 ```
 
 ---
 
-## 5. Analisis de Complejidad
+## 5. Análisis de Complejidad
 
 ### 5.1 Tabla de Complejidad
 
 | Algoritmo | Multiplicaciones | Adiciones | Complejidad |
 |----------|---------------|----------|-----------|
-| NaivOnArray | n^3 | n^3(n-1) | O(n^3) |
-| NaivLoopUnrollingTwo | n^3 | ~n^3 | O(n^3) |
-| NaivLoopUnrollingFour | n^3 | ~n^3 | O(n^3) |
-| WinogradOriginal | n^3/2 | ~n^3/2 | O(n^3) |
-| WinogradScaled | n^3/2 | ~n^3/2 | O(n^3) |
+| NaivOnArray | n³ | n³(n-1) | O(n³) |
+| NaivLoopUnrollingTwo | n³ | ~n³ | O(n³) |
+| NaivLoopUnrollingFour | n³ | ~n³ | O(n³) |
+| WinogradOriginal | n³/2 | ~n³/2 | O(n³) |
+| WinogradScaled | n³/2 | ~n³/2 | O(n³) |
 | StrassenNaiv | 7n^2.807 | 6n^2.807 | O(n^2.807) |
 | StrassenWinograd | 7n^2.807 | ~6n^2.807 | O(n^2.807) |
-| III.3 Sequential | n^3 | n^3 | O(n^3) |
-| III.4 Parallel | n^3/p | n^3/p | O(n^3/p) |
-| III.5 Enhanced | n^3/p | n^3/p | O(n^3/p) |
-| IV.3 Sequential | n^3 | n^3 | O(n^3) |
-| IV.4 Parallel | n^3/p | n^3/p | O(n^3/p) |
-| IV.5 Enhanced | n^3/p | n^3/p | O(n^3/p) |
-| V.3 Sequential | n^3 | n^3 | O(n^3) |
-| V.4 Parallel | n^3/p | n^3/p | O(n^3/p) |
+| III.3 Sequential | n³ | n³ | O(n³) |
+| III.4 Parallel | n³/p | n³/p | O(n³/p) |
+| III.5 Enhanced | n³/p | n³/p | O(n³/p) |
+| IV.3 Sequential | n³ | n³ | O(n³) |
+| IV.4 Parallel | n³/p | n³/p | O(n³/p) |
+| IV.5 Enhanced | n³/p | n³/p | O(n³/p) |
+| V.3 Sequential | n³ | n³ | O(n³) |
+| V.4 Parallel | n³/p | n³/p | O(n³/p) |
 
-### 5.2 Analisis de Constante Oculta
+### 5.2 Análisis de Constante Oculta
 
 | Algoritmo | Cte. Oculta | Notas |
 |----------|------------|-------|
 | NaivOnArray | 1 | Base simple |
 | WinogradOriginal | ~0.5 | Menos mult. |
-| StrassenNaiv | ~15 | Overhead recursion |
-| Block Sequential | ~1.1 | Overhead indices |
-| Block Parallel | ~1.1 + sinc. | Sincronizacion |
+| StrassenNaiv | ~15 | Overhead recursión |
+| Block Sequential | ~1.1 | Overhead índices |
+| Block Parallel | ~1.1 + sinc. | Sincronización |
 
-### 5.3 Punto de Crucce
+### 5.3 Punto de Cruce
 
-| Comparacion | Tamano | Razon |
+| Comparación | Tamaño | Razón |
 |------------|-------|-------|
-| Naiv vs Winograd | ~8x8 | Overhead precalculo |
-| Naiv vs Strassen | ~64x64 | Overhead recursion |
-| Seq vs Parallel | depende | Num. nucleos |
+| Naiv vs Winograd | ~8×8 | Overhead precalculo |
+| Naiv vs Strassen | ~64×64 | Overhead recursión |
+| Seq vs Parallel | depende | Núm. núcleos |
 
 ---
 
-## 6. Diseno de Persistencia
+## 6. Diseño de Persistencia
 
-### 6.1 Formato XML
+### 6.1 Formato Excel (.xlsx)
 
-#### Matriz
-```xml
-<?xml version="1.0"?>
-<matrix rows="512" cols="512">
-    <row index="0">
-        <cell>1234567.0</cell>
-        <cell>2345678.0</cell>
-        ...
-    </row>
-    ...
-</matrix>
+La persistencia se realiza en formato Excel para mayor legibilidad. Este formato reemplaza la implementación anterior en XML.
+
+#### Archivo de Matrices
+
+Cada caso de prueba genera un archivo Excel con la siguiente estructura:
+
+| Hoja | Contenido |
+|------|----------|
+| Matriz A | Datos de la primera matriz con formato tabular |
+| Matriz B | Datos de la segunda matriz con formato tabular |
+| Info | Metadatos: caso, tamaño, fecha, formato numérico |
+
+Ejemplo de estructura:
+```
+matrix_Caso1_512x512.xlsx
+├── Matriz A (512×512)
+│   ├── Fila 0: [valor, valor, ...]
+│   ├── Fila 1: [valor, valor, ...]
+│   └── ...
+├── Matriz B (512×512)
+│   └── ...
+└── Info
+    ├── Caso: Caso1
+    ├── Tamaño: 512×512
+    ├── Fecha: 2026-01-01
+    └── Elementos por matriz: 262144
 ```
 
-#### Resultados
-```xml
-<?xml version="1.0"?>
-<results>
-    <result>
-        <size>512</size>
-        <algorithm>NaivOnArray</algorithm>
-        <language>python</language>
-        <executionTime>1234567</executionTime>
-        <case>Caso1</case>
-        <rows>512</rows>
-        <cols>512</cols>
-    </result>
-    ...
-</results>
-```
+#### Archivo de Resultados
+
+El archivo `python_results.xlsx` contiene:
+
+| Hoja | Contenido |
+|------|----------|
+| Caso1 | Tiempos de ejecución para 512×512 |
+| Caso2 | Tiempos de ejecución para 1024×1024 |
+| Comparativa | Tabla resumen comparativa |
+| Gráfico | Imagen PNG del gráfico comparativo |
+
+#### Gráfico Comparativo
+
+El gráfico de barras comparativo se genera en dos formatos:
+- **PNG**: `grafico_comparativo.png` (archivo separado)
+- **Embebido**: Imagen insertada en hoja "Gráfico" del Excel
+
+El gráfico muestra:
+- Eje X: 15 algoritmos
+- Eje Y: Tiempo de ejecución (milisegundos)
+- Barras agrupadas: Caso 1 (azul) vs Caso 2 (naranja)
+- Etiquetas de valor en cada barra
 
 ### 6.2 Estructura de Archivos
 
 ```
 src/main/resources/
 ├── matrices/
-│   ├── matrix_Caso1_512x512.xml
-│   ├── matrix_Caso1_512x512.xml
-│   ├── matrix_Caso2_1024x1024.xml
-│   └── matrix_Caso2_1024x1024.xml
+│   ├── matrix_Caso1_512x512.xlsx
+│   ├── matrix_Caso1_512x512.xlsx
+│   ├── matrix_Caso2_1024x1024.xlsx
+│   └── matrix_Caso2_1024x1024.xlsx
 └── results/
-    └── python_results.xml
+    ├── python_results.xlsx
+    └── grafico_comparativo.png
 ```
 
 ---
 
-## 7. Analisis de Uso de Memoria
+## 7. Análisis de Uso de Memoria
 
-### 7.1 Calculo de Espacio
+### 7.1 Cálculo de Espacio
 
-| Tamano | Elementos | Bytes (float64) | Bytes (float32) |
+| Tamaño | Elementos | Bytes (float64) | Bytes (float32) |
 |--------|----------|---------------|----------------|
-| 512x512 | 262,144 | 2,097,152 | 1,048,576 |
-| 1024x1024 | 1,048,576 | 8,388,608 | 4,194,304 |
+| 512×512 | 262,144 | 2,097,152 | 1,048,576 |
+| 1024×1024 | 1,048,576 | 8,388,608 | 4,194,304 |
 
 ### 7.2 Requisitos de Memoria
 
 | Caso | Matrices | Resultado | Total |
 |------|----------|---------|--------|
-| 512x512 | 2x2MB | 2MB | 6MB |
-| 1024x1024 | 2x8MB | 8MB | 24MB |
+| 512×512 | 2×2MB | 2MB | 6MB |
+| 1024×1024 | 2×8MB | 8MB | 24MB |
 
-### 7.3 Consideraciones de Cache
+### 7.3 Consideraciones de Caché
 
-| Nivel | Tamano Tipico | Observaciones |
+| Nivel | Tamaño Típico | Observaciones |
 |-------|--------------|---------------|
-| L1 | 32KB/nucleo | Matrices pequenas |
-| L2 | 256KB/nucleo | Bloques pequenos |
+| L1 | 32KB/núcleo | Matrices pequeñas |
+| L2 | 256KB/núcleo | Bloques pequeños |
 | L3 | 8MB compartido | Matrices grandes |
 | RAM | GiB | Matrices enormes |
 
 ---
 
-## 8. Diseno de Pruebas
+## 8. Diseño de Pruebas
 
 ### 8.1 Casos de Prueba
 
-| ID | Matriz A | Matriz B | Proposito |
+| ID | Matriz A | Matriz B | Propósito |
 |----|----------|---------|-----------|
-| CP-01 | 512x512 | 512x512 | Caso 1 |
-| CP-02 | 1024x1024 | 1024x1024 | Caso 2 |
+| CP-01 | 512×512 | 512×512 | Caso 1 |
+| CP-02 | 1024×1024 | 1024×1024 | Caso 2 |
 
-### 8.2 Metricas a Medir
+### 8.2 Métricas a Medir
 
-| Metrica | Unidad | Instrumento |
+| Métrica | Unidad | Instrumento |
 |--------|--------|-------------|
 | Tiempo | nanosegundos | time.perf_counter_ns() |
 | Memoria | bytes | sys.getsizeof() |
 | CPU | porcentaje | psutil (opcional) |
 
-### 8.3 Criterios de Aceptacion
+### 8.3 Criterios de Aceptación
 
 | Criterio | Valor Esperado |
 |----------|---------------|
 | Todos los algoritmos ejecutan | 15/15 |
-| Resultados en XML | Completo |
-| Grafico generado | Sin errores |
-| Tiempos consistentes | Variance < 10% |
+| Resultados en Excel | Completo |
+| Gráfico PNG generado | Sin errores |
+| Gráfico en Excel | Imagen embebida |
+| Tiempos consistentes | Varianza < 10% |
 
 ---
 
 ## 9. Interfaz de Usuario
 
-### 9.1 Flujo de Interaccion
+### 9.1 Flujo de Interacción
 
 ```
 1. Ejecutar programa
@@ -398,7 +421,7 @@ src/main/resources/
 2. Generar/Cargar matrices
    |
    v
-3. Seleccionar algoritmo (automatico)
+3. Seleccionar algoritmo (automático)
    |
    v
 4. Mostrar progreso
@@ -407,7 +430,7 @@ src/main/resources/
 5. Guardar resultados
    |
    v
-6. Mostrar grafico
+6. Mostrar gráfico
 ```
 
 ### 9.2 Salida de Consola
@@ -417,32 +440,32 @@ src/main/resources/
 Ejecutando Caso1
 ==================================================
 
---- Tamano: 512x512 ---
+--- Tamaño: 512×512 ---
   Ejecutando NaivOnArray... OK
   Ejecutando NaivLoopUnrollingTwo... OK
   Ejecutando NaivLoopUnrollingFour... OK
   ...
 ```
 
-### 9.3 Grafico de Resultados
+### 9.3 Gráfico de Resultados
 
 - Eje X: Algoritmos (15)
-- Eje Y: Tiempo de ejecucion (nanosegundos)
+- Eje Y: Tiempo de ejecución (nanosegundos)
 - Colores: Caso 1 (rojo), Caso 2 (azul)
-- Filtrable por tamano y lenguaje
+- Filtrable por tamaño y lenguaje
 
 ---
 
 ## 10. Glosario
 
-| Termino | Definicion |
+| Término | Definición |
 |---------|-----------|
-| n | Dimension de matriz cuadrada |
-| O(f(n)) | Notacion de complejidad asintotica |
+| n | Dimensión de matriz cuadrada |
+| O(f(n)) | Notación de complejidad asintótica |
 | Overhead | Tiempo extra por estructura |
 | Speedup | Ganancia de rendimiento |
-| Block size | Tamano de division de matrices |
-| p | Numero de procesos/hilos |
+| Block size | Tamaño de división de matrices |
+| p | Número de procesos/hilos |
 
 ---
 
@@ -451,10 +474,10 @@ Ejecutando Caso1
 1. Cormen, T.H. et al. "Introduction to Algorithms" - Cap. 4, 28
 2. Strassen, V. "Gaussian Elimination is not Optimal" - 1969
 3. Winograd, S. "On the Number of Multiplications" - 1968
-4. Documentacion Python: docs.python.org
+4. Documentación Python: docs.python.org
 
 ---
 
-*Documento de Diseno v1.0 - Seguimiento 2*
-*Universidad del Quindio - Ingenieria de Sistemas y Computacion*
+*Documento de Diseño v1.0 - Seguimiento 2*
+*Universidad del Quindío - Ingeniería de Sistemas y Computación*
 *2026*

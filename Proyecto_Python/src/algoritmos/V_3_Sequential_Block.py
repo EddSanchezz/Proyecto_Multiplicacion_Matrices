@@ -1,14 +1,51 @@
+"""
+Algoritmo V_3_Sequential_Block - Multiplicación por Bloques Secuencial (Nivel 5)
+
+Implementación de multiplicación de matrices por bloques en su variante
+secuencial de quinto nivel de optimización.
+
+Complejidad Computacional:
+    - Temporal: O(n³)
+    - Espacial: O(n²) para la matriz resultado
+    - Multiplicaciones: n³
+
+Descripción:
+    Quinta iteración del algoritmo de multiplicación por bloques.
+    Esta versión es similar a IV.3 con pequeñas variaciones en el
+    orden de operaciones que pueden afectar el rendimiento.
+
+Técnica:
+    - Triple bucle externo para bloques
+    - Triple bucle interno con fórmula modificada
+    - block_size = N (toda la matriz como un bloque)
+
+Parámetros:
+    matrizA (list): Matriz de dimensiones N×P
+    matrizB (list): Matriz de dimensiones P×M
+    N (int): Número de filas de A
+    P (int): Columnas de A / Filas de B
+    M (int): Número de columnas de B
+    block_size (int): Tamaño de los bloques
+
+Retorna:
+    list: Matriz resultado de dimensiones N×M
+"""
+
+
 def alg_V_3_Sequential_Block(matrizA, matrizB, N, P, M, block_size):
     """
     Multiplicación de matrices por bloques secuencial (variante V).
     
     Args:
-        matrizA: Matriz A de tamaño N x P
-        matrizB: Matriz B de tamaño P x M
-        N: Filas de A
-        P: Columnas de A / Filas de B
-        M: Columnas de B
-        block_size: Tamaño del bloque
+        matrizA (list): Matriz A de tamaño N×P
+        matrizB (list): Matriz B de tamaño P×M
+        N (int): Filas de A
+        P (int): Columnas de A / Filas de B
+        M (int): Columnas de B
+        block_size (int): Tamaño del bloque
+    
+    Returns:
+        list: Matriz resultado N×M
     """
     matrizRes = [[0.0 for _ in range(M)] for _ in range(N)]
     
@@ -26,10 +63,20 @@ def alg_V_3_Sequential_Block(matrizA, matrizB, N, P, M, block_size):
     
     return matrizRes
 
+
 def multiply(matrizA, matrizB):
+    """
+    Función de interfaz para el algoritmo V_3_Sequential_Block.
+    
+    Args:
+        matrizA (list): Matriz N×P
+        matrizB (list): Matriz P×M
+    
+    Returns:
+        list: Matriz resultado N×M
+    """
     N = len(matrizA)
     P = len(matrizB)
     M = len(matrizB[0])
     block_size = N
     return alg_V_3_Sequential_Block(matrizA, matrizB, N, P, M, block_size)
-

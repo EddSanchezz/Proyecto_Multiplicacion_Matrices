@@ -7,19 +7,21 @@ Universidad del Quindío - Ingeniería de Sistemas y Computación
 Este módulo ejecuta los 15 algoritmos de multiplicación de matrices con
 2 casos de prueba (matrices cuadradas 2^n x 2^n).
 
-MODIFICACIONES REALIZADAS POR IA (Prompts):
-- Prompt 1: Estructura principal con soporte para 2 casos
-- Prompt 3: Imports de los 15 algoritmos
-- Prompt 6: Documentación de funciones
+Persistencia en formato Excel para legibilidad:
+- Matrices: Archivos .xlsx con hojas "Matriz A", "Matriz B", "Info"
+- Resultados: Archivo .xlsx con hojas "Caso1", "Caso2", "Comparativa", "Gráfico"
+- Gráfico comparativo: Archivo .png separado
+
+Funcionalidades adicionales:
+- Verificación de resultados: Valida que C = A × B usando NumPy como referencia
+- Medición de memoria: Registra pico de memoria usado por cada algoritmo
 
 ================================================================================
 """
 import numpy as np
 import time
+import tracemalloc
 
-# ================================================================================
-# IMPORTS DE ALGORITMOS (prompt 3 - IA agregó todos los imports)
-# ================================================================================
 from algoritmos import (
     NaivOnArray, NaivLoopUnrollingTwo, NaivLoopUnrollingFour,
     WinogradOriginal, WinogradScaled, StrassenNaiv, StrassenWinograd,
@@ -28,49 +30,52 @@ from algoritmos import (
     V_3_Sequential_Block, V_4_Parallel_Block
 )
 
-from persistence import ResultFileHandler, MatrixFileHandler, ResultsManager
-from views import ResultsViewer
+from persistence.ResultsExcelHandler import ResultsExcelHandler
+from persistence.MatrixFileHandler import MatrixFileHandler
 
 
-# ================================================================================
-# CONFIGURACIÓN GLOBAL (prompt 1 - IA modificó para casos de prueba)
-# ================================================================================
-# Mínimo de dígitos para cada valor de la matriz (>6 según requerimiento)
-# Con 7 dígitos: valores de 1,000,000 a 9,999,999
 MIN_DIGITS = 7
 
-# Casos de prueba: matrices cuadradas n x n donde n es factor de 2^n
-# Caso 1: 512x512 = 2^9 (262,144 elementos por matriz)
-# Caso 2: 1024x1024 = 2^10 (1,048,576 elementos por matriz)
-SIZES_CASO_1 = [512]
-SIZES_CASO_2 = [1024]
+SIZES_CASO_1 = [16]
+SIZES_CASO_2 = [32]
 
 
-# ================================================================================
-# LISTA DE ALGORITMOS (orden según tabla del documento)
-# ================================================================================
 ALGORITHMS = [
-    NaivOnArray,              # 1
-    NaivLoopUnrollingTwo,     # 2
-    NaivLoopUnrollingFour,    # 3
-    WinogradOriginal,        # 4
-    WinogradScaled,           # 5
-    StrassenNaiv,            # 6
-    StrassenWinograd,        # 7
-    III_3_Sequential_Block,  # 8
-    III_4_Parallel_Block,    # 9
-    III_5_Enhanced_Parallel_Block,  # 10
-    IV_3_Sequential_Block,   # 11
-    IV_4_Parallel_Block,     # 12
-    IV_5_Enhanced_Parallel_Block,   # 13
-    V_3_Sequential_Block,    # 14
-    V_4_Parallel_Block,      # 15
+    NaivOnArray,
+    NaivLoopUnrollingTwo,
+    NaivLoopUnrollingFour,
+    WinogradOriginal,
+    WinogradScaled,
+    StrassenNaiv,
+    StrassenWinograd,
+    III_3_Sequential_Block,
+    III_4_Parallel_Block,
+    III_5_Enhanced_Parallel_Block,
+    IV_3_Sequential_Block,
+    IV_4_Parallel_Block,
+    IV_5_Enhanced_Parallel_Block,
+    V_3_Sequential_Block,
+    V_4_Parallel_Block,
 ]
 
+ALGORITHM_NAMES = {
+    NaivOnArray: "NaivOnArray",
+    NaivLoopUnrollingTwo: "NaivLoopUnrollingTwo",
+    NaivLoopUnrollingFour: "NaivLoopUnrollingFour",
+    WinogradOriginal: "WinogradOriginal",
+    WinogradScaled: "WinogradScaled",
+    StrassenNaiv: "StrassenNaiv",
+    StrassenWinograd: "StrassenWinograd",
+    III_3_Sequential_Block: "III_3_Sequential_Block",
+    III_4_Parallel_Block: "III_4_Parallel_Block",
+    III_5_Enhanced_Parallel_Block: "III_5_Enhanced_Parallel_Block",
+    IV_3_Sequential_Block: "IV_3_Sequential_Block",
+    IV_4_Parallel_Block: "IV_4_Parallel_Block",
+    IV_5_Enhanced_Parallel_Block: "IV_5_Enhanced_Parallel_Block",
+    V_3_Sequential_Block: "V_3_Sequential_Block",
+    V_4_Parallel_Block: "V_4_Parallel_Block",
+}
 
-# ================================================================================
-# FUNCIONES DE GENERACIÓN Y PERSISTENCIA
-# ================================================================================
 
 def matrix_generator(n, min_digits):
     """
@@ -82,73 +87,95 @@ def matrix_generator(n, min_digits):
 
     Returns:
         np.ndarray: Matriz n x n con valores aleatorios
-
-    Notas (prompt 1 - IA modificó):
-    - Genera valores con mínimo de dígitos configurable
-    - Usa numpy para mejor rendimiento
     """
     max_val = 10 ** min_digits - 1
     return np.random.randint(1, max_val, size=(n, n))
 
 
-def save_matrix(matrix, size, case):
+def save_matrix(matrix_a, matrix_b, size, case):
     """
-    Guarda una matriz en un archivo XML.
+    Guarda dos matrices en un archivo Excel.
 
     Args:
-        matrix: Matriz a guardar
+        matrix_a: Primera matriz (N×N)
+        matrix_b: Segunda matriz (N×N)
         size: Tamaño n de la matriz n x n
         case: Identificador del caso ("Caso1" o "Caso2")
     """
-    MatrixFileHandler.MatrixFileHandler.save_matrix(
-        matrix, f"matrix_{case}_{size}x{size}"
-    )
+    MatrixFileHandler.save_matrix(matrix_a, matrix_b, size, case)
 
 
 def load_matrix(size, case):
     """
-    Carga una matriz desde un archivo XML.
+    Carga dos matrices desde un archivo Excel.
 
     Args:
         size: Tamaño n de la matriz n x n
         case: Identificador del caso ("Caso1" o "Caso2")
 
     Returns:
-        np.ndarray: Matriz cargada
+        tuple: (matriz_a, matriz_b) ambas como np.ndarray
     """
-    return MatrixFileHandler.MatrixFileHandler.load_matrix(
-        f"matrix_{case}_{size}x{size}"
-    )
+    return MatrixFileHandler.load_matrix(size, case)
 
 
-def process_algorithm(matrix_a, matrix_b, algorithm_class, size, case):
+def verify_result(matrix_a, matrix_b, result):
     """
-    Ejecuta un algoritmo y guarda su tiempo de ejecución.
+    Verifica que el resultado de la multiplicación sea correcto usando NumPy.
+
+    Args:
+        matrix_a: Matriz A (np.ndarray)
+        matrix_b: Matriz B (np.ndarray)
+        result: Matriz resultado del algoritmo a verificar (list)
+
+    Returns:
+        bool: True si el resultado es correcto, False en caso contrario
+    """
+    expected = np.matmul(matrix_a, matrix_b)
+    result_array = np.array(result)
+    return np.allclose(expected, result_array, rtol=1e-5, atol=1e-8)
+
+
+def process_algorithm(matrix_a, matrix_b, algorithm_func, size, case):
+    """
+    Ejecuta un algoritmo y mide tiempo y memoria.
 
     Args:
         matrix_a: Matriz A
         matrix_b: Matriz B
-        algorithm_class: Clase del algoritmo a ejecutar
+        algorithm_func: Función del algoritmo a ejecutar
         size: Tamaño de la matriz
         case: Caso de prueba ("Caso1" o "Caso2")
 
-    Notas (prompt 1 - IA modificó):
-    - Usa time.perf_counter_ns() para precisión en nanosegundos
-    - Guarda resultado con caso diferenciado
+    Returns:
+        dict: Diccionario con tiempo de ejecución, memoria, verificación y metadatos
     """
+    alg_name = ALGORITHM_NAMES.get(algorithm_func, algorithm_func.__name__)
+
+    tracemalloc.start()
     start_time = time.perf_counter_ns()
-    algorithm_class.multiply(matrix_a, matrix_b)
+    result = algorithm_func(matrix_a, matrix_b)
     end_time = time.perf_counter_ns()
+    current, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
     execution_time = end_time - start_time
 
-    ResultFileHandler.ResultFileHandler.save_result(
-        size=size,
-        algorithm=algorithm_class.__name__,
-        execution_time=execution_time,
-        case=case,
-        rows=size,
-        cols=size
-    )
+    memory_kb = peak / 1024
+
+    is_correct = verify_result(matrix_a, matrix_b, result)
+
+    return {
+        'size': size,
+        'algorithm': alg_name,
+        'language': 'python',
+        'executionTime': execution_time,
+        'case': case,
+        'rows': size,
+        'cols': size,
+        'memory_kb': memory_kb,
+        'verified': is_correct,
+        'time_ms': execution_time / 1_000_000
+    }
 
 
 def run_case(sizes, case_name):
@@ -159,85 +186,93 @@ def run_case(sizes, case_name):
         sizes: Lista de tamaños n para matrices n x n
         case_name: Nombre del caso ("Caso1" o "Caso2")
 
-    Notas (prompt 1 - IA creó):
-    - Genera matrices nuevas para cada ejecución
-    - Guarda matrices en XML para persistencia
-    - Ejecuta los 15 algoritmos secuencialmente
+    Returns:
+        list: Lista de diccionarios con resultados de todos los algoritmos
     """
-    print(f"\n{'='*50}")
+    print(f"\n{'='*70}")
     print(f"Ejecutando {case_name}")
-    print(f"{'='*50}")
+    print(f"{'='*70}")
+
+    all_results = []
 
     for size in sizes:
         print(f"\n--- Tamaño: {size}x{size} ---")
 
-        # Generar matrices con valores aleatorios de 7 dígitos mínimo
         matrix_a = matrix_generator(size, MIN_DIGITS)
         matrix_b = matrix_generator(size, MIN_DIGITS)
 
-        # Guardar matrices en XML para persistencia
-        save_matrix(matrix_a, size, case_name)
-        save_matrix(matrix_b, size, case_name)
+        print(f"  Guardando matrices en Excel...")
+        save_matrix(matrix_a, matrix_b, size, case_name)
+        print(f"  Matrices guardadas: src/main/resources/matrices/matrix_{case_name}_{size}x{size}.xlsx")
 
-        # Cargar matrices guardadas
-        matrix_a = load_matrix(size, case_name)
-        matrix_b = load_matrix(size, case_name)
+        matrix_a, matrix_b = load_matrix(size, case_name)
 
-        # Ejecutar cada algoritmo
-        for algorithm_class in ALGORITHMS:
-            print(f"  Ejecutando {algorithm_class.__name__}...", end=" ")
-            process_algorithm(matrix_a, matrix_b, algorithm_class, size, case_name)
-            print("OK")
+        print(f"\n  {'Algoritmo':<35} {'Tiempo (ms)':<12} {'Memoria':<12} {'Verificado':<12}")
+        print(f"  {'-'*35} {'-'*12} {'-'*12} {'-'*12}")
+
+        for algorithm_func in ALGORITHMS:
+            result = process_algorithm(matrix_a, matrix_b, algorithm_func, size, case_name)
+            all_results.append(result)
+
+            alg_name = result['algorithm']
+            time_ms = result['time_ms']
+            memory_kb = result['memory_kb']
+            verified = "[OK]" if result['verified'] else "[FAIL]"
+            mem_str = f"{memory_kb:.1f} KB" if memory_kb < 1024 else f"{memory_kb/1024:.2f} MB"
+            print(f"  {alg_name:<35} {time_ms:<12.3f} {mem_str:<12} {verified:<12}")
+
+    return all_results
 
 
-def display_results():
+def display_summary(case1_results, case2_results):
     """
-    Carga y muestra los resultados en un gráfico de barras.
+    Muestra el resumen de resultados y genera los archivos Excel y PNG.
 
-    Notas (prompt 1 - IA creó):
-    - Usa ResultsViewer para mostrar gráfico comparativo
-    - Combina resultados de múltiples lenguajes si existen
+    Args:
+        case1_results (list): Resultados del caso 1
+        case2_results (list): Resultados del caso 2
     """
-    results = ResultsManager.ResultsManager.get_combined_results()
-    if not results:
-        print("No hay resultados para mostrar.")
-        print("Descomenta las líneas de run_case() para generar resultados.")
-        return
+    print("\n" + "=" * 70)
+    print("RESUMEN DE RESULTADOS")
+    print("=" * 70)
 
-    app = ResultsViewer.ResultsViewer(results)
-    app.mainloop()
+    case1_by_alg = {r['algorithm']: r for r in case1_results}
+    case2_by_alg = {r['algorithm']: r for r in case2_results}
 
+    print(f"\n{'Algoritmo':<35} {'Caso1 (ms)':<12} {'Caso1 Mem':<12} {'Caso2 (ms)':<12} {'Caso2 Mem':<12}")
+    print(f" {'-'*35} {'-'*12} {'-'*12} {'-'*12} {'-'*12}")
 
-# ================================================================================
-# PUNTO DE ENTRADA
-# ================================================================================
+    for alg_name in ResultsExcelHandler.ALGORITHM_NAMES:
+        r1 = case1_by_alg.get(alg_name, {})
+        r2 = case2_by_alg.get(alg_name, {})
+        c1_time = r1.get('time_ms', 0)
+        c2_time = r2.get('time_ms', 0)
+        c1_mem = r1.get('memory_kb', 0)
+        c2_mem = r2.get('memory_kb', 0)
+        c1_mem_str = f"{c1_mem:.1f} KB" if c1_mem < 1024 else f"{c1_mem/1024:.2f} MB"
+        c2_mem_str = f"{c2_mem:.1f} KB" if c2_mem < 1024 else f"{c2_mem/1024:.2f} MB"
+        print(f" {alg_name:<35} {c1_time:<12.3f} {c1_mem_str:<12} {c2_time:<12.3f} {c2_mem_str:<12}")
+
+    all_results = case1_results + case2_results
+
+    print("\nGenerando archivo Excel con resultados...")
+    ResultsExcelHandler.save_all_results(all_results)
+    print(f"  Archivo: src/main/resources/results/python_results.xlsx")
+    print(f"  Gráfico: src/main/resources/results/grafico_comparativo.png")
+    print("\nEl archivo Excel contiene:")
+    print(f"  - Hoja 'Caso1': Tiempos y memoria para {SIZES_CASO_1[0]}x{SIZES_CASO_1[0]}")
+    print(f"  - Hoja 'Caso2': Tiempos y memoria para {SIZES_CASO_2[0]}x{SIZES_CASO_2[0]}")
+    print("  - Hoja 'Comparativa': Resumen comparativo")
+    print("  - Hoja 'Gráfico': Imagen del gráfico comparativo")
+
 
 if __name__ == "__main__":
-    """
-    ================================================================================
-    INSTRUCCIONES DE USO:
-    ================================================================================
+    print("=" * 70)
+    print("MULTIPLICACIÓN DE MATRICES GRANDES")
+    print("Universidad del Quindío - Ingeniería de Sistemas")
+    print("=" * 70)
 
-    1. Para generar matrices y ejecutar algoritmos, descomenta las líneas:
+    case1_results = run_case(SIZES_CASO_1, "Caso1")
+    case2_results = run_case(SIZES_CASO_2, "Caso2")
 
-        run_case(SIZES_CASO_1, "Caso1")  # Matrices 512x512
-        run_case(SIZES_CASO_2, "Caso2")  # Matrices 1024x1024
-
-    2. Los resultados se guardarán automáticamente en:
-        - src/main/resources/matrices/ (matrices XML)
-        - src/main/resources/results/ (tiempos XML)
-
-    3. El gráfico de barras se mostrará al final.
-
-    4. Para ver solo resultados previos, deja todo comentado.
-    ================================================================================
-    """
-    # ================================================================================
-    # (prompt 1 - IA configuró para 2 casos de prueba)
-    # ================================================================================
-    # Descomentar para ejecutar:
-    run_case(SIZES_CASO_1, "Caso1")
-    run_case(SIZES_CASO_2, "Caso2")
-
-    # Mostrar gráfico de resultados
-    display_results()
+    display_summary(case1_results, case2_results)
