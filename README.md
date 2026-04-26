@@ -18,7 +18,7 @@ Para matrices n×n, la multiplicación directa tiene complejidad **O(n³)** - du
 
 Matrices cuadradas n×n (n factor de 2ⁿ) con valores mínimo 6 dígitos.
 
-> **Nota:** Los tamaños 16×16 y 32×32 se usan por limitaciones de hardware. El proyecto escala a 512×512 y 1024×1024 cambiando `SIZES_CASO_1` y `SIZES_CASO_2` en `main.py`.
+> **Nota:** Los tamaños 16×16 y 32×32 se usan por limitaciones de hardware. El proyecto escala a 512×512 y 1024×1024 cambiando `SIZES_CASO_1` y `SIZES_CASO_2` en `main.py` (como ejemplo puede ver una ejecución con matrices de tamaños 128x128 y 256x256 en la rama Prueba 2).
 
 | Caso | Tamaño | Elementos | Memoria |
 |------|---------|-----------|---------|
